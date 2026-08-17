@@ -1,0 +1,250 @@
+name: Build and deploy
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+env:
+  CHART_PATH: helm/devops-app
+  HELM_RELEASE: ${{ vars.HELM_RELEASE || 'devops-app' }}
+  KUBE_NAMESPACE: ${{ vars.KUBE_NAMESPACE || 'devops-app' }}
+
+jobs:
+  validate-chart:
+    name: Validate Helm chart
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Install Helm
+        uses: azure/setup-helm@v5
+
+      - name: Check PostgreSQL init SQL copy
+        run: diff -u db/init.sql "$CHART_PATH/files/init.sql"
+
+      - name: Lint chart
+        run: helm lint "$CHART_PATH"
+
+      - name: Render chart
+        run: >-
+          helm template "$HELM_RELEASE" "$CHART_PATH"
+          --namespace "$KUBE_NAMESPACE"
+          --set-string api.image.tag="$GITHUB_SHA"
+          --set-string worker.image.tag="$GITHUB_SHA"
+
+  build-images:
+    name: Build ${{ matrix.service }} image
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - api
+          - worker
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set image repository
+        id: image
+        shell: bash
+        run: |
+          repository="ghcr.io/${GITHUB_REPOSITORY,,}-${{ matrix.service }}"
+          echo "repository=$repository" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build and optionally push image
+        uses: docker/build-push-action@v7
+        with:
+          context: ./${{ matrix.service }}
+          push: ${{ github.event_name != 'pull_request' }}
+          platforms: ${{ vars.IMAGE_PLATFORMS || 'linux/amd64' }}
+          tags: |
+            ${{ steps.image.outputs.repository }}:${{ github.sha }}
+            ${{ github.ref == 'refs/heads/main' && format('{0}:latest', steps.image.outputs.repository) || '' }}
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.service }},ignore-error=true
+          provenance: false
+
+  deploy:
+    name: Deploy to Kubernetes
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: read
+    needs:
+      - validate-chart
+      - build-images
+    runs-on: ${{ vars.DEPLOY_RUNNER || 'self-hosted' }}
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v5
+
+      - name: Install Helm
+        uses: azure/setup-helm@v5
+
+      - name: Configure kubeconfig
+        shell: bash
+        env:
+          KUBE_CONFIG_B64: ${{ secrets.KUBE_CONFIG_B64 }}
+          KUBE_CONFIG_PATH: ${{ vars.KUBE_CONFIG_PATH }}
+        run: |
+          if [[ -n "$KUBE_CONFIG_B64" ]]; then
+            kubeconfig="$RUNNER_TEMP/kubeconfig"
+            printf '%s' "$KUBE_CONFIG_B64" | base64 --decode > "$kubeconfig"
+            chmod 600 "$kubeconfig"
+          elif [[ -n "$KUBE_CONFIG_PATH" && -r "$KUBE_CONFIG_PATH" ]]; then
+            kubeconfig="$KUBE_CONFIG_PATH"
+          elif [[ -r "$HOME/.kube/config" ]]; then
+            kubeconfig="$HOME/.kube/config"
+          else
+            echo "No kubeconfig found: set KUBE_CONFIG_B64, KUBE_CONFIG_PATH, or create $HOME/.kube/config" >&2
+            exit 1
+          fi
+
+          echo "KUBECONFIG=$kubeconfig" >> "$GITHUB_ENV"
+
+      - name: Ensure namespace
+        shell: bash
+        run: |
+          if ! kubectl get namespace "$KUBE_NAMESPACE" >/dev/null 2>&1; then
+            kubectl create namespace "$KUBE_NAMESPACE"
+          fi
+
+      - name: Verify cluster access
+        run: kubectl --namespace "$KUBE_NAMESPACE" auth can-i create secrets
+
+      - name: Create or update database Secret
+        shell: bash
+        env:
+          DATABASE_SECRET_NAME: ${{ vars.DATABASE_SECRET_NAME || 'devops-app-database' }}
+          POSTGRES_USER: ${{ vars.POSTGRES_USER || 'app' }}
+          POSTGRES_DB: ${{ vars.POSTGRES_DB || 'app' }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+        run: |
+          secret_exists=false
+          if kubectl --namespace "$KUBE_NAMESPACE" get secret "$DATABASE_SECRET_NAME" >/dev/null 2>&1; then
+            secret_exists=true
+          fi
+
+          if [[ -z "$POSTGRES_PASSWORD" ]]; then
+            if [[ "$secret_exists" == "true" ]]; then
+              echo "POSTGRES_PASSWORD is not set; reusing existing Kubernetes Secret"
+              exit 0
+            fi
+
+            POSTGRES_PASSWORD="$(< /proc/sys/kernel/random/uuid)$(< /proc/sys/kernel/random/uuid)"
+            echo "POSTGRES_PASSWORD is not set; generated a password for the initial Kubernetes Secret"
+          fi
+
+          secret_args=(
+            kubectl --namespace "$KUBE_NAMESPACE" create secret generic "$DATABASE_SECRET_NAME"
+            --from-literal=POSTGRES_USER="$POSTGRES_USER" \
+            --from-literal=POSTGRES_PASSWORD="$POSTGRES_PASSWORD" \
+            --from-literal=POSTGRES_DB="$POSTGRES_DB"
+          )
+
+          if [[ "$secret_exists" == "true" ]]; then
+            if ! secret_output="$("${secret_args[@]}" --dry-run=client --output=yaml | kubectl apply --filename=- 2>&1)"; then
+              encoded_error="$(printf '%s' "$secret_output" | base64 | tr -d '\n')"
+              echo "::error title=Database Secret update failed::base64:$encoded_error"
+              exit 1
+            fi
+          elif ! secret_output="$("${secret_args[@]}" 2>&1)"; then
+            encoded_error="$(printf '%s' "$secret_output" | base64 | tr -d '\n')"
+            echo "::error title=Database Secret creation failed::base64:$encoded_error"
+            exit 1
+          fi
+
+          echo "$secret_output"
+
+      - name: Create or update GHCR pull Secret
+        id: registry-secret
+        shell: bash
+        env:
+          GHCR_PULL_TOKEN: ${{ secrets.GHCR_PULL_TOKEN || github.token }}
+          GHCR_PULL_USERNAME: ${{ secrets.GHCR_PULL_USERNAME }}
+          REGISTRY_SECRET_NAME: ${{ vars.REGISTRY_SECRET_NAME || 'ghcr-pull-secret' }}
+        run: |
+          if [[ -z "$GHCR_PULL_TOKEN" ]]; then
+            echo "No GHCR_PULL_TOKEN: assuming the GHCR packages are public"
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          registry_user="${GHCR_PULL_USERNAME:-$GITHUB_ACTOR}"
+          kubectl --namespace "$KUBE_NAMESPACE" create secret docker-registry "$REGISTRY_SECRET_NAME" \
+            --docker-server=ghcr.io \
+            --docker-username="$registry_user" \
+            --docker-password="$GHCR_PULL_TOKEN" \
+            --dry-run=client \
+            --output=yaml | kubectl apply --filename=-
+          echo "enabled=true" >> "$GITHUB_OUTPUT"
+
+      - name: Upgrade Helm release
+        shell: bash
+        env:
+          DATABASE_SECRET_NAME: ${{ vars.DATABASE_SECRET_NAME || 'devops-app-database' }}
+          REGISTRY_SECRET_NAME: ${{ vars.REGISTRY_SECRET_NAME || 'ghcr-pull-secret' }}
+          REGISTRY_SECRET_ENABLED: ${{ steps.registry-secret.outputs.enabled }}
+        run: |
+          api_image="ghcr.io/${GITHUB_REPOSITORY,,}-api"
+          worker_image="ghcr.io/${GITHUB_REPOSITORY,,}-worker"
+
+          helm_args=(
+            --namespace "$KUBE_NAMESPACE"
+            --set-string "api.image.repository=$api_image"
+            --set-string "api.image.tag=$GITHUB_SHA"
+            --set-string "worker.image.repository=$worker_image"
+            --set-string "worker.image.tag=$GITHUB_SHA"
+            --set postgresql.secret.create=false
+            --set-string "postgresql.secret.existingSecret=$DATABASE_SECRET_NAME"
+            --atomic
+            --wait
+            --timeout 10m
+            --history-max 10
+          )
+
+          if [[ "$REGISTRY_SECRET_ENABLED" == "true" ]]; then
+            helm_args+=(--set-string "imagePullSecrets[0].name=$REGISTRY_SECRET_NAME")
+          fi
+
+          helm upgrade --install "$HELM_RELEASE" "$CHART_PATH" "${helm_args[@]}"
+
+      - name: Show deployment status
+        run: |
+          kubectl --namespace "$KUBE_NAMESPACE" get pods,services,ingresses
+          kubectl --namespace "$KUBE_NAMESPACE" rollout status deployment \
+            --selector="app.kubernetes.io/instance=$HELM_RELEASE" \
+            --timeout=3m
+          kubectl --namespace "$KUBE_NAMESPACE" rollout status statefulset \
+            --selector="app.kubernetes.io/instance=$HELM_RELEASE" \
+            --timeout=3m

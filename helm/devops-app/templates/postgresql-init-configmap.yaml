@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "devops-app.postgresqlName" . }}-init
+  labels:
+    {{- include "devops-app.labels" . | nindent 4 }}
+    app.kubernetes.io/component: postgresql
+data:
+  init.sql: |
+{{ .Files.Get "files/init.sql" | indent 4 }}
+
