@@ -1,4 +1,15 @@
 services:
+  api:
+    build: ./api
+    environment:
+      DATABASE_URL: postgresql://app:app@postgres:5432/app
+      REDIS_URL: redis://redis:6379/0
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - redis
+      - worker
 
   worker:
     build: ./worker
