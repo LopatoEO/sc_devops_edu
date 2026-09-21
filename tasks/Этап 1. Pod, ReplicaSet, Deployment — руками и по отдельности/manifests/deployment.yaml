@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: api
+
+spec:
+  replicas: 3
+
+  selector:
+    matchLabels:
+      app: api
+
+  template:
+    metadata:
+      labels:
+        app: api
+
+    spec:
+      containers:
+        - name: api
+          image: elopato/devops-edu-api:v1.0
+          imagePullPolicy: IfNotPresent
+
+          ports:
+            - containerPort: 8000
+
+          env:
+            - name: REDIS_URL
+              value: "redis://redis:6379/0"
+
+            - name: EVENTS_CACHE_TTL
+              value: "30"
+
+            - name: DATABASE_URL
+              value: "postgresql://app:app@postgres:5432/app"
