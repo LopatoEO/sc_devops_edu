@@ -68,7 +68,7 @@ def api_root():
 
 @app.get("/healthz")
 def healthz():
-    raise HTTPException(status_code=500, detail="not work")
+    return {"service": "api", "status": "ok"}
 
 
 @app.get("/readyz")

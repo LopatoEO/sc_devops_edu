@@ -1,0 +1,14 @@
+The {{ .Release.Name }} release is installed in namespace {{ .Release.Namespace }}.
+
+Check the workloads:
+  kubectl -n {{ .Release.Namespace }} get pods
+
+{{- if .Values.api.ingress.enabled }}
+API host:
+  {{ (first .Values.api.ingress.hosts).host }}
+{{- else }}
+Test the API locally:
+  kubectl -n {{ .Release.Namespace }} port-forward service/{{ include "devops-app.fullname" . }}-api 8000:{{ .Values.api.service.port }}
+  curl http://127.0.0.1:8000/health
+{{- end }}
+

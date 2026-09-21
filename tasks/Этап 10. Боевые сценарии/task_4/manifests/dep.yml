@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: readiness-demo
+
+spec:
+  replicas: 2
+
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 0
+
+  selector:
+    matchLabels:
+      app: readiness-demo
+
+  template:
+    metadata:
+      labels:
+        app: readiness-demo
+
+    spec:
+      containers:
+        - name: app
+          image: python:3.12-alpine
+
+          env:
+            - name: APP_STATUS
+              value: "200"
+
+          ports:
+            - containerPort: 8000
+
+          command:
+            - python
+            - -c
+            - |
+              import os
+              from http.server import BaseHTTPRequestHandler, HTTPServer
+
+              status = int(os.environ.get("APP_STATUS", "200"))
+
+              class Handler(BaseHTTPRequestHandler):
+                  def do_GET(self):
+                      if self.path == "/readyz":
+                          self.send_response(200)
+                          self.end_headers()
+                          self.wfile.write(b"READY")
+                          return
+
+                      self.send_response(status)
+                      self.end_headers()
+                      self.wfile.write(
+                          f"APP STATUS: {status}\n".encode()
+                      )
+
+                  def log_message(self, format, *args):
+                      pass
+
+              HTTPServer(("0.0.0.0", 8000), Handler).serve_forever()
+
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8000
+
+            initialDelaySeconds: 1
+            periodSeconds: 2
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: readiness-demo
+
+spec:
+  selector:
+    app: readiness-demo
+
+  ports:
+    - port: 8000
+      targetPort: 8000

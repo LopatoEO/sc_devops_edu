@@ -22,10 +22,10 @@ brew install kubectl
 Запустил кластер коммандой
 
 ```shell
-minikube start \
-  --nodes=2 \
-  --cpus=1 \
-  --memory=1536
+minikube start
+--nodes=2
+--cpus=2
+--memory=1536
 ```
 
 Проверил контекст

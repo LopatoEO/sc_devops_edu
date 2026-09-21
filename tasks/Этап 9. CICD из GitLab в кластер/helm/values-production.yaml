@@ -1,10 +1,10 @@
 imagePullSecrets:
-  - name: ghcr-creds
+  - name: ghcr-pull-secret
 
 api:
   replicaCount: 3
   image:
-    repository: ghcr.io/your-org/devops-2-api
+    repository: ghcr.io/lopatoeo/edu-devops-helm-ci-cd-api
     tag: "2026.08.17"
     pullPolicy: IfNotPresent
   service:
@@ -23,15 +23,15 @@ api:
       memory: 512Mi
   probes:
     startup:
-      path: /health
+      path: /healthz
       failureThreshold: 30
       periodSeconds: 5
     liveness:
-      path: /health
+      path: /healthz
       initialDelaySeconds: 10
       periodSeconds: 10
     readiness:
-      path: /db-check
+      path: /readyz
       initialDelaySeconds: 5
       periodSeconds: 5
   autoscaling:
@@ -41,13 +41,13 @@ api:
     targetCPUUtilizationPercentage: 60
   ingress:
     enabled: true
-    className: traefik
+    className: nginx
     annotations:
       cert-manager.io/cluster-issuer: letsencrypt-prod
     hosts:
       - host: api.example.com
         paths:
-          - path: /
+          - path: /api
             pathType: Prefix
     tls:
       - hosts:
@@ -67,7 +67,7 @@ api:
 worker:
   replicaCount: 2
   image:
-    repository: ghcr.io/your-org/devops-2-worker
+    repository: ghcr.io/lopatoeo/edu-devops-helm-ci-cd-worker
     tag: "2026.08.17"
     pullPolicy: IfNotPresent
   resources:

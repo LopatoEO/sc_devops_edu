@@ -1,7 +1,8 @@
 nameOverride: ""
 fullnameOverride: ""
 
-imagePullSecrets: []
+imagePullSecrets:
+  - name: ghcr-pull-secret
 
 api:
   replicaCount: 2
@@ -25,15 +26,15 @@ api:
       memory: 256Mi
   probes:
     startup:
-      path: /health
+      path: /healthz
       failureThreshold: 30
       periodSeconds: 5
     liveness:
-      path: /health
+      path: /healthz
       initialDelaySeconds: 10
       periodSeconds: 10
     readiness:
-      path: /db-check
+      path: /readyz
       initialDelaySeconds: 5
       periodSeconds: 5
   autoscaling:
@@ -43,12 +44,12 @@ api:
     targetCPUUtilizationPercentage: 50
   ingress:
     enabled: true
-    className: traefik
+    className: nginx
     annotations: {}
     hosts:
-      - host: ""
+      - host: api.local
         paths:
-          - path: /
+          - path: /api
             pathType: Prefix
     tls: []
   podAnnotations: {}

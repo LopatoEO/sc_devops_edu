@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pending-pvc
+spec:
+  containers:
+    - name: app
+      image: nginx:alpine
+      volumeMounts:
+        - name: data
+          mountPath: /data
+
+  volumes:
+    - name: data
+      persistentVolumeClaim:
+        claimName: broken-pvc

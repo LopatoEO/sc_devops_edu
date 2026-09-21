@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: crashloop-test
+spec:
+  containers:
+    - name: app
+      image: busybox:1.36
+      command:
+        - sh
+        - -c
+        - |
+          echo "Application starting..."
+          echo "FATAL: DATABASE_URL is missing"
+          sleep 2
+          exit 1

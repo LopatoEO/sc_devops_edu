@@ -1,0 +1,239 @@
+name: CI/CD Helm
+
+on:
+  push:
+    branches:
+      - main
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: true
+
+env:
+  NAMESPACE: default
+  RELEASE_NAME: devops-app
+  CHART_PATH: ./helm/devops-app
+
+jobs:
+  build:
+    name: Build ${{ matrix.service }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - api
+          - worker
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Login to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+        with:
+          platforms: all
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Prepare image name
+        id: image
+        shell: bash
+        run: |
+          REPOSITORY=$(printf '%s' "$GITHUB_REPOSITORY" | tr '[:upper:]' '[:lower:]')
+          IMAGE_NAME="ghcr.io/${REPOSITORY}-${{ matrix.service }}"
+
+          echo "name=$IMAGE_NAME" >> "$GITHUB_OUTPUT"
+          echo "Image: $IMAGE_NAME"
+
+      - name: Build and push multi-arch image
+        uses: docker/build-push-action@v7
+        with:
+          context: ./${{ matrix.service }}
+          platforms: linux/amd64,linux/arm64
+          push: true
+
+          tags: |
+            ${{ steps.image.outputs.name }}:${{ github.sha }}
+            ${{ steps.image.outputs.name }}:latest
+
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.service }}
+
+      - name: Verify image platforms
+        shell: bash
+        run: |
+          docker buildx imagetools inspect \
+            "${{ steps.image.outputs.name }}:${GITHUB_SHA}"
+
+  deploy:
+    name: Deploy with Helm
+    runs-on: self-hosted
+
+    needs:
+      - build
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Configure PATH
+        shell: bash
+        run: |
+          echo "/opt/homebrew/bin" >> "$GITHUB_PATH"
+          echo "/usr/local/bin" >> "$GITHUB_PATH"
+
+      - name: Check tools and cluster
+        shell: bash
+        run: |
+          echo "=== kubectl ==="
+          kubectl version --client
+
+          echo
+          echo "=== Helm ==="
+          helm version
+
+          echo
+          echo "=== Context ==="
+          kubectl config current-context
+
+          echo
+          echo "=== Nodes ==="
+          kubectl get nodes
+
+      - name: Wait for ingress controller
+        shell: bash
+        run: |
+          kubectl wait \
+            --namespace ingress-nginx \
+            --for=condition=available \
+            deployment/ingress-nginx-controller \
+            --timeout=180s
+
+      - name: Create GHCR pull secret
+        shell: bash
+        env:
+          GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
+          GHCR_PULL_TOKEN: ${{ secrets.GHCR_PULL_TOKEN }}
+        run: |
+          kubectl create secret docker-registry ghcr-pull-secret \
+            --namespace "$NAMESPACE" \
+            --docker-server=ghcr.io \
+            --docker-username="$GHCR_USERNAME" \
+            --docker-password="$GHCR_PULL_TOKEN" \
+            --dry-run=client \
+            -o yaml \
+            | kubectl apply -f -
+
+      - name: Prepare image values
+        shell: bash
+        run: |
+          REPOSITORY=$(printf '%s' "$GITHUB_REPOSITORY" | tr '[:upper:]' '[:lower:]')
+
+          API_REPOSITORY="ghcr.io/${REPOSITORY}-api"
+          WORKER_REPOSITORY="ghcr.io/${REPOSITORY}-worker"
+
+          echo "API_REPOSITORY=$API_REPOSITORY" >> "$GITHUB_ENV"
+          echo "WORKER_REPOSITORY=$WORKER_REPOSITORY" >> "$GITHUB_ENV"
+
+          echo "API: $API_REPOSITORY:$GITHUB_SHA"
+          echo "Worker: $WORKER_REPOSITORY:$GITHUB_SHA"
+
+      - name: Helm lint
+        shell: bash
+        run: |
+          helm lint "$CHART_PATH"
+
+      - name: Render Helm templates
+        shell: bash
+        run: |
+          helm template "$RELEASE_NAME" "$CHART_PATH" \
+            --namespace "$NAMESPACE" \
+            --set-string api.image.repository="$API_REPOSITORY" \
+            --set-string api.image.tag="$GITHUB_SHA" \
+            --set-string worker.image.repository="$WORKER_REPOSITORY" \
+            --set-string worker.image.tag="$GITHUB_SHA" \
+            > /tmp/rendered.yaml
+
+          echo "Helm chart rendered successfully"
+
+      - name: Deploy Helm release
+        shell: bash
+        run: |
+          helm upgrade --install "$RELEASE_NAME" "$CHART_PATH" \
+            --namespace "$NAMESPACE" \
+            --create-namespace \
+            --set-string api.image.repository="$API_REPOSITORY" \
+            --set-string api.image.tag="$GITHUB_SHA" \
+            --set-string worker.image.repository="$WORKER_REPOSITORY" \
+            --set-string worker.image.tag="$GITHUB_SHA" \
+            --rollback-on-failure \
+            --wait \
+            --timeout 5m
+
+      - name: Show Helm release
+        shell: bash
+        run: |
+          echo "=== Releases ==="
+          helm list \
+            --namespace "$NAMESPACE"
+
+          echo
+          echo "=== Release history ==="
+          helm history "$RELEASE_NAME" \
+            --namespace "$NAMESPACE"
+
+      - name: Show Kubernetes resources
+        shell: bash
+        run: |
+          echo "=== Pods ==="
+          kubectl get pods \
+            --namespace "$NAMESPACE" \
+            -o wide
+
+          echo
+          echo "=== Deployments ==="
+          kubectl get deployments \
+            --namespace "$NAMESPACE"
+
+          echo
+          echo "=== StatefulSets ==="
+          kubectl get statefulsets \
+            --namespace "$NAMESPACE"
+
+          echo
+          echo "=== Services ==="
+          kubectl get services \
+            --namespace "$NAMESPACE"
+
+          echo
+          echo "=== Ingress ==="
+          kubectl get ingress \
+            --namespace "$NAMESPACE"
+
+          echo
+          echo "=== API image ==="
+          kubectl get deployment "${RELEASE_NAME}-api" \
+            --namespace "$NAMESPACE" \
+            -o jsonpath='{.spec.template.spec.containers[0].image}{"\n"}'
+
+          echo
+          echo "=== Worker image ==="
+          kubectl get deployment "${RELEASE_NAME}-worker" \
+            --namespace "$NAMESPACE" \
+            -o jsonpath='{.spec.template.spec.containers[0].image}{"\n"}'

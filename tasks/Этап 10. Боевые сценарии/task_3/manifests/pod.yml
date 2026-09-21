@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: api-debug
+  labels:
+    app: api
+spec:
+  containers:
+    - name: api
+      image: python:3.12-slim
+      command:
+        - sh
+        - -c
+        - sleep infinity

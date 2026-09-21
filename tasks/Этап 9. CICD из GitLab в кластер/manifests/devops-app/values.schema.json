@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["api", "worker", "postgresql", "redis"],
+  "properties": {
+    "imagePullSecrets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "properties": { "name": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "api": {
+      "type": "object",
+      "required": ["replicaCount", "image", "service", "ingress", "autoscaling"],
+      "properties": {
+        "replicaCount": { "type": "integer", "minimum": 1 },
+        "eventsCacheTtl": { "type": "string", "pattern": "^[0-9]+$" },
+        "image": { "$ref": "#/definitions/image" },
+        "service": {
+          "type": "object",
+          "required": ["type", "port"],
+          "properties": {
+            "type": { "type": "string", "enum": ["ClusterIP", "NodePort", "LoadBalancer"] },
+            "port": { "type": "integer", "minimum": 1, "maximum": 65535 }
+          }
+        },
+        "ingress": { "type": "object" },
+        "autoscaling": { "type": "object" }
+      }
+    },
+    "worker": {
+      "type": "object",
+      "required": ["replicaCount", "image"],
+      "properties": {
+        "replicaCount": { "type": "integer", "minimum": 1 },
+        "image": { "$ref": "#/definitions/image" }
+      }
+    },
+    "postgresql": {
+      "type": "object",
+      "required": ["image", "port", "auth", "secret", "persistence"],
+      "properties": {
+        "image": { "$ref": "#/definitions/image" },
+        "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+        "auth": {
+          "type": "object",
+          "required": ["username", "database", "password"],
+          "properties": {
+            "username": { "type": "string", "minLength": 1 },
+            "database": { "type": "string", "minLength": 1 },
+            "password": { "type": "string", "minLength": 1 }
+          }
+        },
+        "secret": { "type": "object" },
+        "persistence": { "$ref": "#/definitions/persistence" }
+      }
+    },
+    "redis": {
+      "type": "object",
+      "required": ["image", "port", "persistence"],
+      "properties": {
+        "image": { "$ref": "#/definitions/image" },
+        "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+        "persistence": { "$ref": "#/definitions/persistence" }
+      }
+    }
+  },
+  "definitions": {
+    "image": {
+      "type": "object",
+      "required": ["repository", "tag", "pullPolicy"],
+      "properties": {
+        "repository": { "type": "string", "minLength": 1 },
+        "tag": { "type": "string", "minLength": 1 },
+        "pullPolicy": { "type": "string", "enum": ["Always", "IfNotPresent", "Never"] }
+      }
+    },
+    "persistence": {
+      "type": "object",
+      "required": ["enabled", "size", "storageClass", "accessModes"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "size": { "type": "string", "minLength": 1 },
+        "storageClass": { "type": "string" },
+        "accessModes": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string" }
+        }
+      }
+    }
+  }
+}
+

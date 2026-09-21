@@ -30,3 +30,13 @@ spec:
                 name: api-config
             - secretRef:
                 name: app-secret
+
+          volumeMounts:
+            - name: config-files
+              mountPath: /etc/app-config
+              readOnly: true
+
+      volumes:
+        - name: config-files
+          configMap:
+            name: api-config
