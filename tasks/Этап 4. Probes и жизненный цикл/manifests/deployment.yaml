@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: api
-          image: elopato/devops-edu-api:v1.2
+          image: elopato/devops-edu-api:v1.0
           imagePullPolicy: IfNotPresent
 
           ports:

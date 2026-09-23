@@ -18,7 +18,18 @@ spec:
           image: postgres:16
           ports:
             - containerPort: 5432
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -ec
+                - pg_isready -h 127.0.0.1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+            periodSeconds: 2
+            timeoutSeconds: 2
+            failureThreshold: 3
           envFrom:
+            - configMapRef:
+                name: api-config
             - secretRef:
                 name: pg-secret
           volumeMounts:

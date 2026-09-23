@@ -11,6 +11,10 @@ spec:
         - -c
         - |
           echo "Application starting..."
-          echo "FATAL: DATABASE_URL is missing"
-          sleep 2
-          exit 1
+          if [ -z "${DATABASE_URL:-}" ]; then
+            echo "FATAL: DATABASE_URL is missing"
+            sleep 2
+            exit 1
+          fi
+          echo "Configuration loaded"
+          sleep 3600

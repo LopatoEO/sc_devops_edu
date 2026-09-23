@@ -5,6 +5,7 @@ metadata:
 
 spec:
   replicas: 2
+  minReadySeconds: 30
 
   strategy:
     type: RollingUpdate
@@ -45,11 +46,13 @@ spec:
               class Handler(BaseHTTPRequestHandler):
                   def do_GET(self):
                       if self.path == "/readyz":
-                          self.send_response(200)
+                          ready = 200 if os.environ.get("READINESS_MODE", "always") == "always" else status
+                          self.send_response(ready)
                           self.end_headers()
                           self.wfile.write(b"READY")
                           return
 
+                      print(f"request path={self.path} status={status}", flush=True)
                       self.send_response(status)
                       self.end_headers()
                       self.wfile.write(

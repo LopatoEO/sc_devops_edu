@@ -1,0 +1,28 @@
+# Only local verification: applied on top of values-production.yaml.
+imagePullSecrets: []
+api:
+  autoscaling:
+    minReplicas: 1
+    maxReplicas: 2
+  image:
+    repository: elopato/devops-edu-api
+    tag: v1.0
+  ingress:
+    annotations: null
+    hosts:
+      - host: helm.api.local
+        paths:
+          - path: /api
+            pathType: Prefix
+    tls: []
+worker:
+  replicaCount: 1
+  image:
+    repository: elopato/devops-edu-worker
+    tag: v1.0
+postgresql:
+  persistence:
+    size: 1Gi
+redis:
+  persistence:
+    size: 1Gi

@@ -36,7 +36,14 @@ spec:
               mountPath: /etc/app-config
               readOnly: true
 
+            - name: secret-files
+              mountPath: /etc/app-secret
+              readOnly: true
+
       volumes:
         - name: config-files
           configMap:
             name: api-config
+        - name: secret-files
+          secret:
+            secretName: app-secret

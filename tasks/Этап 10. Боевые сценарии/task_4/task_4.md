@@ -1,5 +1,74 @@
 После выката половина запросов отдаёт 503. Объясни, как это связано с readinessProbe и `maxUnavailable`.
 
+Проверим что это действительно так
+
+```bash
+kubectl -n default exec readiness-check -- sh -c 'for i in $(seq 1 60); do curl -sS --max-time 3 -o /dev/null -w "%{http_code}\n" http://readiness-demo:8000/; sleep 0.1; done'
+
+200
+200
+503
+200
+503
+200
+503
+200
+503
+503
+200
+200
+200
+200
+503
+503
+503
+200
+200
+503
+503
+200
+503
+200
+200
+200
+503
+503
+200
+503
+200
+503
+200
+200
+200
+200
+503
+503
+200
+503
+503
+503
+503
+503
+503
+503
+503
+200
+503
+503
+503
+200
+200
+503
+503
+503
+503
+503
+503
+503
+```
+
+
+
 Для проверки сценария использовал Deployment с двумя репликами и стратегией RollingUpdate:
 
 Также была настроена readynessProbe, которая проверяла соответсвующий endpoint.
@@ -57,9 +126,9 @@ Pod Template:
       -c
       import os
       from http.server import BaseHTTPRequestHandler, HTTPServer
-      
+    
       status = int(os.environ.get("APP_STATUS", "200"))
-      
+    
       class Handler(BaseHTTPRequestHandler):
           def do_GET(self):
               if self.path == "/readyz":
@@ -67,18 +136,18 @@ Pod Template:
                   self.end_headers()
                   self.wfile.write(b"READY")
                   return
-      
+    
               self.send_response(status)
               self.end_headers()
               self.wfile.write(
                   f"APP STATUS: {status}\n".encode()
               )
-      
+    
           def log_message(self, format, *args):
               pass
-      
+    
       HTTPServer(("0.0.0.0", 8000), Handler).serve_forever()
-      
+    
     Readiness:  http-get http://:8000/readyz delay=1s timeout=1s period=2s #success=1 #failure=3
     Environment:
       APP_STATUS:  200

@@ -41,7 +41,6 @@ kubectl -n default port-forward service/api 8000:8000
 
 В `manifests/deployment.yaml` сохранён `envFrom` и добавлены `volumeMounts` контейнера и `volumes` шаблона Pod. ConfigMap `api-config` смонтирован каталогом `/etc/app-config`, в режиме `readOnly: true`, без `subPath`. Ключ `EVENTS_CACHE_TTL` доступен одновременно как env и файл `/etc/app-config/EVENTS_CACHE_TTL`.
 
-
 ```bash
 kubectl -n default apply -f manifests
 ```
@@ -68,14 +67,25 @@ kubectl -n default exec api-765fb99c49-49h65 -- cat /etc/app-config/EVENTS_CACHE
 ```text
 30
 ```
+
+Найдем значение этой же переменной в env того же Pod
+
+```bash
+kubectl -n default exec api-765fb99c49-49h65 -- printenv EVENTS_CACHE_TTL
+```
+
+```text
+30
+```
+
 Изменим переменную через изменение конфигмапы
 
 ```bash
-kubectl -n default patch configmap api-config --type=merge -p '{"data":{"EVENTS_CACHE_TTL":"60"}}'
+kubectl -n default patch configmap app-config --type=merge -p '{"data":{"EVENTS_CACHE_TTL":"60"}}'
 configmap/api-config patched
 ```
 
-Проаерим что значение изменилось
+Проверим, что значение в volume изменилось
 
 ```bash
 kubectl -n default exec api-765fb99c49-49h65 -- cat /etc/app-config/EVENTS_CACHE_TTL
@@ -85,5 +95,16 @@ kubectl -n default exec api-765fb99c49-49h65 -- cat /etc/app-config/EVENTS_CACHE
 60
 ```
 
+Проверим значение переменной окружения в том же работающем Pod
 
-Так если бы приложение умело это отрабатывать можно было бы на лету менять его конфиг
+```bash
+kubectl -n default exec api-765fb99c49-49h65 -- printenv EVENTS_CACHE_TTL
+```
+
+```text
+30
+```
+
+Значение в env осталось прежним, потому что переменные окружения формируются при запуске контейнера. Чтобы получить новое значение из ConfigMap через envFrom, Pod нужно пересоздать.
+
+Файл в volume обновился без пересоздания Pod. Если бы приложение умело перечитывать этот файл, его конфигурацию можно было бы менять на лету.

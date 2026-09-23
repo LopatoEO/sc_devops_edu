@@ -28,6 +28,11 @@ spec:
           image: elopato/devops-edu-api:v1.0
           imagePullPolicy: IfNotPresent
 
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "sleep 5"]
+
           ports:
             - containerPort: 8000
 

@@ -13,7 +13,7 @@ permissions:
 
 concurrency:
   group: production-deploy
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 env:
   NAMESPACE: default
@@ -140,6 +140,17 @@ jobs:
             -o yaml \
             | kubectl apply -f -
 
+      - name: Create database credentials
+        shell: bash
+        env:
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+        run: |
+          : "${POSTGRES_PASSWORD:?Configure POSTGRES_PASSWORD in Actions secrets}"
+          kubectl create secret generic postgres-auth \
+            --namespace "$NAMESPACE" \
+            --from-literal=POSTGRES_PASSWORD="$POSTGRES_PASSWORD" \
+            --dry-run=client -o yaml | kubectl apply -f -
+
       - name: Prepare image values
         shell: bash
         run: |
@@ -157,12 +168,13 @@ jobs:
       - name: Helm lint
         shell: bash
         run: |
-          helm lint "$CHART_PATH"
+          helm lint "$CHART_PATH" -f "$CHART_PATH/values-production.yaml"
 
       - name: Render Helm templates
         shell: bash
         run: |
           helm template "$RELEASE_NAME" "$CHART_PATH" \
+            -f "$CHART_PATH/values-production.yaml" \
             --namespace "$NAMESPACE" \
             --set-string api.image.repository="$API_REPOSITORY" \
             --set-string api.image.tag="$GITHUB_SHA" \
@@ -176,6 +188,7 @@ jobs:
         shell: bash
         run: |
           helm upgrade --install "$RELEASE_NAME" "$CHART_PATH" \
+            -f "$CHART_PATH/values-production.yaml" \
             --namespace "$NAMESPACE" \
             --create-namespace \
             --set-string api.image.repository="$API_REPOSITORY" \

@@ -96,10 +96,10 @@ postgresql:
   auth:
     username: app
     database: app
-    password: change-me
+    password: ""
   secret:
-    create: true
-    existingSecret: ""
+    create: false
+    existingSecret: postgres-auth
   persistence:
     enabled: true
     size: 5Gi

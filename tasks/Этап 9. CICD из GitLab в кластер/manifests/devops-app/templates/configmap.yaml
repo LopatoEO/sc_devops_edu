@@ -5,6 +5,8 @@ metadata:
   labels:
     {{- include "devops-app.labels" . | nindent 4 }}
 data:
+  POSTGRES_USER: {{ .Values.postgresql.auth.username | quote }}
+  POSTGRES_DB: {{ .Values.postgresql.auth.database | quote }}
   DB_HOST: {{ include "devops-app.postgresqlName" . | quote }}
   DB_PORT: {{ .Values.postgresql.port | quote }}
   REDIS_URL: {{ printf "redis://%s:%v/0" (include "devops-app.redisName" .) .Values.redis.port | quote }}

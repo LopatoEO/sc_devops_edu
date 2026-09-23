@@ -27,6 +27,8 @@ spec:
           image: {{ printf "%s:%s" .Values.postgresql.image.repository .Values.postgresql.image.tag | quote }}
           imagePullPolicy: {{ .Values.postgresql.image.pullPolicy }}
           envFrom:
+            - configMapRef:
+                name: {{ include "devops-app.configName" . }}
             - secretRef:
                 name: {{ include "devops-app.databaseSecretName" . }}
           env:
@@ -41,7 +43,7 @@ spec:
               command:
                 - /bin/sh
                 - -ec
-                - pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+                - pg_isready -h 127.0.0.1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"
             initialDelaySeconds: 5
             periodSeconds: 5
           livenessProbe:
@@ -49,7 +51,7 @@ spec:
               command:
                 - /bin/sh
                 - -ec
-                - pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+                - pg_isready -h 127.0.0.1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"
             initialDelaySeconds: 20
             periodSeconds: 10
           resources:
