@@ -113,4 +113,3 @@ kubectl patch service postgres \
   --type=merge \
   -p '{"spec":{"selector":{"app":"postgres"}}}'
 ```
-

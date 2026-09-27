@@ -152,4 +152,3 @@ redis-c46d5dffc-jmbc4       1/1     Running   0             41m
 ```
 
 Теперь под рестартиться по liveness probe оставил describe в файле lp_crash_report.txt
-

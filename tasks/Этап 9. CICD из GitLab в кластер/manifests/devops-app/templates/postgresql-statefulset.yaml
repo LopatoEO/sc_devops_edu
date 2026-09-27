@@ -88,4 +88,3 @@ spec:
           requests:
             storage: {{ .Values.postgresql.persistence.size }}
   {{- end }}
-

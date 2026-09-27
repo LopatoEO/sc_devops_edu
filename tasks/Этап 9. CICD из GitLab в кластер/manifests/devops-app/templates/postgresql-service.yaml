@@ -14,4 +14,3 @@ spec:
       port: {{ .Values.postgresql.port }}
       targetPort: postgresql
       protocol: TCP
-

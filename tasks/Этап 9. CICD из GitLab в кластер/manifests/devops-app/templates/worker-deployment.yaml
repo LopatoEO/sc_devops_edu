@@ -45,4 +45,3 @@ spec:
                 name: {{ include "devops-app.databaseSecretName" . }}
           resources:
             {{- toYaml .Values.worker.resources | nindent 12 }}
-

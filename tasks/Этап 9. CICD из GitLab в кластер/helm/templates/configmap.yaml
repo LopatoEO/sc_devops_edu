@@ -11,4 +11,3 @@ data:
   DB_PORT: {{ .Values.postgresql.port | quote }}
   REDIS_URL: {{ printf "redis://%s:%v/0" (include "devops-app.redisName" .) .Values.redis.port | quote }}
   EVENTS_CACHE_TTL: {{ .Values.api.eventsCacheTtl | quote }}
-

@@ -14,4 +14,3 @@ spec:
       port: {{ .Values.redis.port }}
       targetPort: redis
       protocol: TCP
-
