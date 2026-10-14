@@ -15,7 +15,7 @@ pending-resources   0/1     Pending   0          97s
 
 Запустим describe
 
-```bash 
+```bash
 kubectl describe pod pending-resources
 Name:             pending-resources
 Namespace:        default
@@ -25,7 +25,7 @@ Node:             <none>
 Labels:           <none>
 Annotations:      <none>
 Status:           Pending
-IP:               
+IP:
 IPs:              <none>
 Containers:
   app:
@@ -40,7 +40,7 @@ Containers:
       /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-5x6kv (ro)
 Conditions:
   Type           Status
-  PodScheduled   False 
+  PodScheduled   False
 Volumes:
   kube-api-access-5x6kv:
     Type:                    Projected (a volume that contains injected data from multiple sources)
@@ -69,7 +69,7 @@ Events:
 ```bash
 kubectl apply -f manifests/pvc.yml
 persistentvolumeclaim/broken-pvc created
-kubectl apply -f manifests/pvc_pod.yml 
+kubectl apply -f manifests/pvc_pod.yml
 pod/pending-pvc created
 ```
 
@@ -88,7 +88,7 @@ broken-pvc   Pending                                      nonexistent-storage   
 Посмотрим describe пода
 
 ```bash
-kubectl describe pod pending-pvc            
+kubectl describe pod pending-pvc
 Name:             pending-pvc
 Namespace:        default
 Priority:         0
@@ -97,7 +97,7 @@ Node:             <none>
 Labels:           <none>
 Annotations:      <none>
 Status:           Pending
-IP:               
+IP:
 IPs:              <none>
 Containers:
   app:
@@ -110,7 +110,7 @@ Containers:
       /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-v7kpk (ro)
 Conditions:
   Type           Status
-  PodScheduled   False 
+  PodScheduled   False
 Volumes:
   data:
     Type:       PersistentVolumeClaim (a reference to a PersistentVolumeClaim in the same namespace)
@@ -135,17 +135,17 @@ Events:
 Видим что PVC недоступен и идем в describe pvc
 
 ```bash
-kubectl describe pvc broken-pvc 
+kubectl describe pvc broken-pvc
 Name:          broken-pvc
 Namespace:     default
 StorageClass:  nonexistent-storage
 Status:        Pending
-Volume:        
+Volume:
 Labels:        <none>
 Annotations:   <none>
 Finalizers:    [kubernetes.io/pvc-protection]
-Capacity:      
-Access Modes:  
+Capacity:
+Access Modes:
 VolumeMode:    Filesystem
 Used By:       pending-pvc
 Events:
@@ -159,7 +159,7 @@ Events:
 В данном случае просто удаляем сам storage class из манифеста чтобы он стал standart
 
 ```bash
-kubectl get pvc                       
+kubectl get pvc
 NAME         STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
 broken-pvc   Bound    pvc-c13004d9-f4fa-472c-a2cc-e3ec29657819   1Gi        RWO            standard       <unset>                 5s
 kubectl get pods
@@ -172,7 +172,7 @@ pending-pvc   1/1     Running   0          13m
 Написли манифест для пода и запустили его
 
 ```bash
-kubectl apply -f manifests/selector_pod.yml 
+kubectl apply -f manifests/selector_pod.yml
 pod/pending-selector created
 
 kubectl get pods
@@ -183,7 +183,7 @@ pending-selector   0/1     Pending   0          18s
 Под не запустился идем в describe
 
 ```bash
-kubectl describe pod pending-selector 
+kubectl describe pod pending-selector
 Name:             pending-selector
 Namespace:        default
 Priority:         0
@@ -192,7 +192,7 @@ Node:             <none>
 Labels:           <none>
 Annotations:      <none>
 Status:           Pending
-IP:               
+IP:
 IPs:              <none>
 Containers:
   app:
@@ -204,7 +204,7 @@ Containers:
       /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-dj4tm (ro)
 Conditions:
   Type           Status
-  PodScheduled   False 
+  PodScheduled   False
 Volumes:
   kube-api-access-dj4tm:
     Type:                    Projected (a volume that contains injected data from multiple sources)
@@ -231,7 +231,7 @@ Events:
 kubectl label node minikube hardware=quantum-computer
 ```
 
-И пода заработала 
+И пода заработала
 
 ```bash
 NAME               READY   STATUS    RESTARTS   AGE

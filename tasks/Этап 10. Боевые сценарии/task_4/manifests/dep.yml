@@ -21,6 +21,7 @@ spec:
     metadata:
       labels:
         app: readiness-demo
+        version: healthy
 
     spec:
       containers:
@@ -30,6 +31,8 @@ spec:
           env:
             - name: APP_STATUS
               value: "200"
+            - name: READINESS_MODE
+              value: "always"
 
           ports:
             - containerPort: 8000
@@ -39,11 +42,12 @@ spec:
             - -c
             - |
               import os
-              from http.server import BaseHTTPRequestHandler, HTTPServer
+              from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
               status = int(os.environ.get("APP_STATUS", "200"))
 
               class Handler(BaseHTTPRequestHandler):
+                  timeout = 5
                   def do_GET(self):
                       if self.path == "/readyz":
                           ready = 200 if os.environ.get("READINESS_MODE", "always") == "always" else status
@@ -62,7 +66,7 @@ spec:
                   def log_message(self, format, *args):
                       pass
 
-              HTTPServer(("0.0.0.0", 8000), Handler).serve_forever()
+              ThreadingHTTPServer(("0.0.0.0", 8000), Handler).serve_forever()
 
           readinessProbe:
             httpGet:

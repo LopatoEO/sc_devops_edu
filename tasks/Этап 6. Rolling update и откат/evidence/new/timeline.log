@@ -1,0 +1,24 @@
+2026-10-08T10:05:57Z context=minikube namespace=fix-stage6-20261008-run1 GOOD_IMAGE=local/devops-api:fix-v1 NEW_IMAGE=local/devops-api:fix-v2 BAD_IMAGE=docker.io/library/alpine:devops-intentionally-missing-20261008
+2026-10-08T10:06:37Z START baseline
+2026-10-08T10:07:01Z END baseline
+2026-10-08T10:07:01Z START rollout
+2026-10-08T10:07:11Z SET_IMAGE api=local/devops-api:fix-v2
+2026-10-08T10:08:10Z END rollout
+2026-10-08T10:08:10Z START bad-image
+2026-10-08T10:08:14Z SET_IMAGE api=docker.io/library/alpine:devops-intentionally-missing-20261008
+2026-10-08T10:08:55Z END bad-image
+2026-10-08T10:08:55Z START undo
+2026-10-08T10:09:01Z ROLLOUT_UNDO bad-image
+2026-10-08T10:09:13Z END undo
+2026-10-08T10:09:13Z START bad-readiness
+2026-10-08T10:09:18Z PATCH readinessProbe=/intentionally-missing-readyz
+2026-10-08T10:09:59Z END bad-readiness
+2026-10-08T10:09:59Z START readiness-undo
+2026-10-08T10:10:03Z ROLLOUT_UNDO bad-readiness
+2026-10-08T10:10:13Z END readiness-undo
+2026-10-08T10:10:13Z START postgres-off
+2026-10-08T10:10:17Z SCALE postgres=0
+2026-10-08T10:10:59Z END postgres-off
+2026-10-08T10:10:59Z RECOVER postgres=1
+2026-10-08T10:11:05Z START recovery
+2026-10-08T10:11:20Z END recovery

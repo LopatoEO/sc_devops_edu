@@ -30,7 +30,7 @@ spec:
                 name: api-config
             - secretRef:
                 name: app-secret
-                
+
           resources:
             requests:
               cpu: 100m

@@ -1,0 +1,72 @@
+Name:                   readiness-demo
+Namespace:              fix-stage10-20261008-run3
+CreationTimestamp:      Thu, 08 Oct 2026 13:17:29 +0300
+Labels:                 <none>
+Annotations:            deployment.kubernetes.io/revision: 4
+Selector:               app=readiness-demo
+Replicas:               2 desired | 1 updated | 3 total | 2 available | 1 unavailable
+StrategyType:           RollingUpdate
+MinReadySeconds:        30
+RollingUpdateStrategy:  0 max unavailable, 1 max surge
+Pod Template:
+  Labels:  app=readiness-demo
+           version=fixed-broken
+  Containers:
+   app:
+    Image:      python:3.12-alpine
+    Port:       8000/TCP
+    Host Port:  0/TCP
+    Command:
+      python
+      -c
+      import os
+      from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+      status = int(os.environ.get("APP_STATUS", "200"))
+
+      class Handler(BaseHTTPRequestHandler):
+          timeout = 5
+          def do_GET(self):
+              if self.path == "/readyz":
+                  ready = 200 if os.environ.get("READINESS_MODE", "always") == "always" else status
+                  self.send_response(ready)
+                  self.end_headers()
+                  self.wfile.write(b"READY")
+                  return
+
+              print(f"request path={self.path} status={status}", flush=True)
+              self.send_response(status)
+              self.end_headers()
+              self.wfile.write(
+                  f"APP STATUS: {status}\n".encode()
+              )
+
+          def log_message(self, format, *args):
+              pass
+
+      ThreadingHTTPServer(("0.0.0.0", 8000), Handler).serve_forever()
+
+    Readiness:  http-get http://:8000/readyz delay=1s timeout=1s period=2s #success=1 #failure=3
+    Environment:
+      APP_STATUS:      503
+      READINESS_MODE:  status
+    Mounts:            <none>
+  Volumes:             <none>
+  Node-Selectors:      <none>
+  Tolerations:         <none>
+Conditions:
+  Type           Status  Reason
+  ----           ------  ------
+  Available      True    MinimumReplicasAvailable
+  Progressing    True    ReplicaSetUpdated
+OldReplicaSets:  readiness-demo-5db7fc8c8c (2/2 replicas created), readiness-demo-57b7f45ff5 (0/0 replicas created)
+NewReplicaSet:   readiness-demo-7d6cfc7c (1/1 replicas created)
+Events:
+  Type    Reason             Age    From                   Message
+  ----    ------             ----   ----                   -------
+  Normal  ScalingReplicaSet  2m47s  deployment-controller  Scaled up replica set readiness-demo-5db7fc8c8c from 0 to 2
+  Normal  ScalingReplicaSet  111s   deployment-controller  Scaled down replica set readiness-demo-5db7fc8c8c from 2 to 1
+  Normal  ScalingReplicaSet  111s   deployment-controller  Scaled up replica set readiness-demo-57b7f45ff5 from 0 to 1
+  Normal  ScalingReplicaSet  93s    deployment-controller  Scaled down replica set readiness-demo-57b7f45ff5 from 1 to 0
+  Normal  ScalingReplicaSet  92s    deployment-controller  Scaled up replica set readiness-demo-5db7fc8c8c from 1 to 2
+  Normal  ScalingReplicaSet  60s    deployment-controller  Scaled up replica set readiness-demo-7d6cfc7c from 0 to 1

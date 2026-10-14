@@ -1,0 +1,49 @@
+stages: [build, deploy]
+workflow:
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+    - when: never
+variables:
+  NAMESPACE: "edu-gitlab-helm"
+  RELEASE_NAME: "devops-app"
+  CHART_PATH: "./tasks/Этап 9. CICD из GitLab в кластер/helm"
+  CI_SCRIPTS: "./tasks/Этап 9. CICD из GitLab в кластер/ci"
+  PLATFORMS: "linux/amd64,linux/arm64"
+
+build:
+  stage: build
+  tags: [docker-builder]
+  parallel:
+    matrix:
+      - SERVICE: [api, worker]
+  script:
+    - |
+      set -eu
+      export DOCKER_CONFIG="$(mktemp -d)"
+      BUILDER="edu-ci-$CI_JOB_ID"
+      trap 'docker buildx rm "$BUILDER" >/dev/null 2>&1 || true; rm -rf "$DOCKER_CONFIG"' EXIT
+      printf '%s' "$CI_REGISTRY_PASSWORD" | docker login "$CI_REGISTRY" --username "$CI_REGISTRY_USER" --password-stdin
+      docker buildx create --name "$BUILDER" --driver docker-container --use
+      docker buildx inspect --bootstrap
+      docker buildx build --platform "$PLATFORMS" --push \
+        --tag "$CI_REGISTRY_IMAGE/$SERVICE:$CI_COMMIT_SHA" "./src/$SERVICE"
+
+.deploy:
+  stage: deploy
+  tags: [minikube]
+  needs: [build]
+  resource_group: cluster-deployment
+  interruptible: false
+  before_script:
+    - bash "$CI_SCRIPTS/prepare.sh"
+  after_script:
+    - |
+      export KUBECONFIG="$KUBE_CONFIG"
+      mkdir -p evidence
+      kubectl -n "$NAMESPACE" get pods,deploy,statefulsets,pvc -o wide > evidence/resources.txt 2>&1 || true
+      kubectl -n "$NAMESPACE" get events --sort-by=.metadata.creationTimestamp > evidence/events.txt 2>&1 || true
+      printf 'pipeline=%s\nsha=%s\nnamespace=%s\njob_status=%s\n' "$CI_PIPELINE_URL" "$CI_COMMIT_SHA" "$NAMESPACE" "$CI_JOB_STATUS" > evidence/run.txt
+  artifacts:
+    when: always
+    paths: [evidence/]
+    expire_in: 14 days

@@ -32,16 +32,16 @@ curl -v http://api.local/api
 > Host: api.local
 > User-Agent: curl/8.7.1
 > Accept: */*
-> 
+>
 * Request completely sent off
 < HTTP/1.1 200 OK
 < Date: Sat, 19 Sep 2026 17:52:56 GMT
 < Content-Type: application/json
 < Content-Length: 31
 < Connection: keep-alive
-< 
+<
 * Connection #0 to host api.local left intact
-{"service":"api","status":"ok"}%           
+{"service":"api","status":"ok"}%
 ```
 
 

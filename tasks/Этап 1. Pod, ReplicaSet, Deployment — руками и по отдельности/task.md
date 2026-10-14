@@ -10,7 +10,7 @@
 
 Пометь один под новым label через `kubectl label` так, чтобы он выпал из-под selector ReplicaSet. Что сделает контроллер и сколько подов останется?
 
-## Выполнение 
+## Выполнение
 
 В начале данного упражнения собрал докер образ приложения api и запушил в docker registry
 
@@ -29,31 +29,31 @@ api    1/1     Running   0          2m33s
 
 После решил проверить что приложение работает и пробросил порт для проверки
 
-```bash 
+```bash
 kubectl port-forward pod/api 8000:8000
 ```
 
-В отдельном терминале провел проверки 
+В отдельном терминале провел проверки
 
-```bash 
+```bash
 curl http://localhost:8000/healthz
 {"status":"ok"}
 curl http://localhost:8000/readyz
-{"detail":"Database unavailable"}%  
+{"detail":"Database unavailable"}%
 ```
 
 Так как база еще не поднята результат считаю успешным
 
-Удалил под при помощи комманды 
+Удалил под при помощи комманды
 
-```bash 
+```bash
 kubectl delete pod api
 ```
 
 Как и ожидалось под просто умер и не восстанавливается
 
-```bash 
-kubectl get pods        
+```bash
+kubectl get pods
 No resources found in default namespace.
 ```
 
@@ -68,7 +68,7 @@ kubectl apply -f replica-set.yaml
 kubectl get rs
 NAME     DESIRED   CURRENT   READY   AGE
 api-rs   3         3         3       14s
-kubectl get pods                 
+kubectl get pods
 NAME           READY   STATUS    RESTARTS   AGE
 api-rs-7c8j4   1/1     Running   0          28s
 api-rs-n9dcx   1/1     Running   0          28s
@@ -77,7 +77,7 @@ api-rs-tn76f   1/1     Running   0          28s
 
 Снесу один из подов коммандой
 
-```bash 
+```bash
 kubectl delete pod api-rs-7c8j4
 ```
 
@@ -87,7 +87,7 @@ kubectl delete pod api-rs-7c8j4
 kubectl get rs
 NAME     DESIRED   CURRENT   READY   AGE
 api-rs   3         3         3       70s
-kubectl get pods                 
+kubectl get pods
 NAME           READY   STATUS    RESTARTS   AGE
 api-rs-n9dcx   1/1     Running   0          72s
 api-rs-rvgwj   1/1     Running   0          5s
@@ -100,9 +100,9 @@ api-rs-tn76f   1/1     Running   0          72s
 ```bash
 kubectl delete rs api-rs
 replicaset.apps "api-rs" deleted from default namespace
-kubectl get rs          
+kubectl get rs
 No resources found in default namespace.
-kubectl get pods        
+kubectl get pods
 No resources found in default namespace.
 ```
 
@@ -111,7 +111,7 @@ No resources found in default namespace.
 Далее я написал deployment манифест (лежит в папке manifests) и запустил его при помощи комманды
 
 ```bash
-kubectl apply -f deployment.yaml 
+kubectl apply -f deployment.yaml
 ```
 
 Проверил что все работает
@@ -120,10 +120,10 @@ kubectl apply -f deployment.yaml
 kubectl get deployment
 NAME   READY   UP-TO-DATE   AVAILABLE   AGE
 api    3/3     3            3           15s
-kubectl get rs                  
+kubectl get rs
 NAME             DESIRED   CURRENT   READY   AGE
 api-5d4dcb5668   3         3         3       5s
-kubectl get pods                
+kubectl get pods
 NAME                   READY   STATUS    RESTARTS   AGE
 api-5d4dcb5668-87p4h   1/1     Running   0          3s
 api-5d4dcb5668-jhz9z   1/1     Running   0          3s
@@ -145,7 +145,7 @@ api-5d4dcb5668-mwx7m   1/1     Running   0          3m40s   app=api,pod-template
 ```bash
 kubectl label pod api-5d4dcb5668-mwx7m app=not-api --overwrite
 pod/api-5d4dcb5668-mwx7m labeled
-kubectl get pods --show-labels                                
+kubectl get pods --show-labels
 NAME                   READY   STATUS    RESTARTS   AGE     LABELS
 api-5d4dcb5668-87p4h   1/1     Running   0          6m14s   app=api,pod-template-hash=5d4dcb5668
 api-5d4dcb5668-fgs9g   1/1     Running   0          4s      app=api,pod-template-hash=5d4dcb5668
@@ -160,7 +160,7 @@ api-5d4dcb5668-mwx7m   1/1     Running   0          6m14s   app=not-api,pod-temp
 ```bash
 kubectl scale deployment api --replicas=4
 deployment.apps/api scaled
-kubectl get pods --show-labels           
+kubectl get pods --show-labels
 NAME                   READY   STATUS    RESTARTS   AGE    LABELS
 api-5d4dcb5668-87p4h   1/1     Running   0          8m6s   app=api,pod-template-hash=5d4dcb5668
 api-5d4dcb5668-fgs9g   1/1     Running   0          116s   app=api,pod-template-hash=5d4dcb5668
@@ -180,12 +180,12 @@ api-5d4dcb5668-jhz9z   1/1     Running   0          9m29s   app=api,pod-template
 api-5d4dcb5668-mwx7m   1/1     Running   0          9m29s   app=not-api,pod-template-hash=5d4dcb5668
 ```
 
-Удалим деплоймент и посмотрим какие поды остались 
+Удалим деплоймент и посмотрим какие поды остались
 
-```bash 
+```bash
 kubectl delete deployment api
 deployment.apps "api" deleted from default namespace
-kubectl get pods --show-labels           
+kubectl get pods --show-labels
 NAME                   READY   STATUS    RESTARTS   AGE   LABELS
 api-5d4dcb5668-mwx7m   1/1     Running   0          12m   app=not-api,pod-template-hash=5d4dcb5668
 ```

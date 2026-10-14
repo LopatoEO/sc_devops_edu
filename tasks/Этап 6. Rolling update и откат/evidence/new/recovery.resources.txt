@@ -1,0 +1,39 @@
+NAME                          READY   STATUS        RESTARTS   AGE     IP            NODE       NOMINATED NODE   READINESS GATES
+pod/api-9f86cc48f-5sz56       1/1     Running       0          3m40s   10.244.0.43   minikube   <none>           <none>
+pod/api-9f86cc48f-c72w4       1/1     Running       0          4m6s    10.244.0.42   minikube   <none>           <none>
+pod/api-9f86cc48f-xr48g       1/1     Running       0          3m32s   10.244.0.45   minikube   <none>           <none>
+pod/curl-postgres-off         1/1     Terminating   0          67s     10.244.0.53   minikube   <none>           <none>
+pod/curl-recovery             1/1     Running       0          15s     10.244.0.55   minikube   <none>           <none>
+pod/postgres-0                1/1     Running       0          21s     10.244.0.54   minikube   <none>           <none>
+pod/redis-c46d5dffc-98d9b     1/1     Running       0          5m21s   10.244.0.33   minikube   <none>           <none>
+pod/worker-54d9665476-8zq8m   1/1     Running       0          5m20s   10.244.0.35   minikube   <none>           <none>
+pod/worker-54d9665476-qkmk8   1/1     Running       0          5m20s   10.244.0.37   minikube   <none>           <none>
+pod/worker-54d9665476-wnl58   1/1     Running       0          5m20s   10.244.0.36   minikube   <none>           <none>
+
+NAME                     READY   UP-TO-DATE   AVAILABLE   AGE     CONTAINERS   IMAGES                           SELECTOR
+deployment.apps/api      3/3     3            3           5m23s   api          local/devops-api:fix-v2          app=api
+deployment.apps/redis    1/1     1            1           5m21s   redis        redis:7-alpine                   app=redis
+deployment.apps/worker   3/3     3            3           5m21s   worker       elopato/devops-edu-worker:v1.0   app=worker
+
+NAME                                DESIRED   CURRENT   READY   AGE     CONTAINERS   IMAGES                                                           SELECTOR
+replicaset.apps/api-5d47b9b4c       0         0         0       2m2s    api          local/devops-api:fix-v2                                          app=api,pod-template-hash=5d47b9b4c
+replicaset.apps/api-758c4b775b      0         0         0       3m6s    api          docker.io/library/alpine:devops-intentionally-missing-20261008   app=api,pod-template-hash=758c4b775b
+replicaset.apps/api-858bcb84bb      0         0         0       5m23s   api          local/devops-api:fix-v1                                          app=api,pod-template-hash=858bcb84bb
+replicaset.apps/api-9f86cc48f       3         3         3       4m6s    api          local/devops-api:fix-v2                                          app=api,pod-template-hash=9f86cc48f
+replicaset.apps/redis-c46d5dffc     1         1         1       5m21s   redis        redis:7-alpine                                                   app=redis,pod-template-hash=c46d5dffc
+replicaset.apps/worker-54d9665476   3         3         3       5m21s   worker       elopato/devops-edu-worker:v1.0                                   app=worker,pod-template-hash=54d9665476
+
+NAME                        READY   AGE     CONTAINERS   IMAGES
+statefulset.apps/postgres   1/1     5m22s   postgres     postgres:16
+
+NAME                                            ADDRESSTYPE   PORTS   ENDPOINTS                             AGE
+endpointslice.discovery.k8s.io/api-5r6kv        IPv4          8000    10.244.0.42,10.244.0.43,10.244.0.45   5m23s
+endpointslice.discovery.k8s.io/postgres-d8p67   IPv4          5432    10.244.0.54                           5m22s
+endpointslice.discovery.k8s.io/redis-xdqds      IPv4          6379    10.244.0.33                           5m21s
+deployment.apps/api
+REVISION  CHANGE-CAUSE
+1         <none>
+3         <none>
+5         <none>
+6         <none>
+

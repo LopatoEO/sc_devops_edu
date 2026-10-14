@@ -25,7 +25,7 @@ resources:
     memory: 32Mi
 ```
 
-Применил манифесты и получил 
+Применил манифесты и получил
 
 ```bash
 kubectl get pods
@@ -52,10 +52,10 @@ redis-c46d5dffc-jmbc4       1/1     Running             0            5m25s
               memory: 256Mi
 ```
 
-Поды поднялись 
+Поды поднялись
 
 ```bash
-kubectl get pods 
+kubectl get pods
 NAME                        READY   STATUS    RESTARTS   AGE
 api-6f9c79bbf4-44l6l        1/1     Running   0          53s
 api-6f9c79bbf4-7n2dr        1/1     Running   0          69s
@@ -68,14 +68,14 @@ redis-c46d5dffc-jmbc4       1/1     Running   0          10m
 Далее решил положить readyz пробу положил сервис постгреса
 
 ```bash
-kubectl delete -f manifests/postgres-service.yaml 
+kubectl delete -f manifests/postgres-service.yaml
 service "postgres" deleted from default namespace
 ```
 
 Поды выпали из READY
 
 ```bash
-kubectl get pods                                 
+kubectl get pods
 NAME                        READY   STATUS    RESTARTS   AGE
 api-6f9c79bbf4-44l6l        0/1     Running   0          10m
 api-6f9c79bbf4-7n2dr        0/1     Running   0          10m
@@ -86,10 +86,10 @@ redis-c46d5dffc-jmbc4       1/1     Running   0          20m
 
 После поднятия обратно postgres обратно
 
-```bash 
+```bash
 kubectl apply -f manifests/postgres-service.yaml
 service/postgres created
-kubectl get pods 
+kubectl get pods
 NAME                        READY   STATUS    RESTARTS   AGE
 api-6f9c79bbf4-44l6l        1/1     Running   0          11m
 api-6f9c79bbf4-7n2dr        1/1     Running   0          11m
@@ -103,7 +103,7 @@ redis-c46d5dffc-jmbc4       1/1     Running   0          21m
 ```yaml
 containers:
         - name: api
-          image: elopato/devops-edu-api:v1.2 
+          image: elopato/devops-edu-api:v1.2
           imagePullPolicy: IfNotPresent
 ```
 
@@ -118,7 +118,7 @@ def healthz():
 Так как я изменил конфиг Deployment сначала хочет запустить новый под а только потом убить старые и из за этого новый не запускается по startupProbe
 
 ```yaml
-kubectl get pods 
+kubectl get pods
 NAME                        READY   STATUS    RESTARTS   AGE
 api-6cc4866b87-7ln5z        0/1     Running   0          9s
 api-6cc4866b87-v74s4        1/1     Running   0          20s
@@ -142,7 +142,7 @@ redis-c46d5dffc-jmbc4       1/1     Running   0          39m
 для того что проверить liveness probe уберу стартап проб
 
 ```yaml
-kubectl get pods  
+kubectl get pods
 NAME                        READY   STATUS    RESTARTS      AGE
 api-5559f85d94-cgppn        1/1     Running   1 (25s ago)   57s
 api-5559f85d94-cvs5j        1/1     Running   1 (25s ago)   57s

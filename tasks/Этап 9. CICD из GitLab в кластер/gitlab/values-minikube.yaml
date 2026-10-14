@@ -1,0 +1,11 @@
+imagePullSecrets:
+  - name: registry-pull
+api:
+  ingress:
+    enabled: false
+  autoscaling:
+    enabled: false
+postgresql:
+  secret:
+    create: false
+    existingSecret: postgres-auth

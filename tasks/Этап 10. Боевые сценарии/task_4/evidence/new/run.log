@@ -1,0 +1,64 @@
+context=minikube namespace=fix-stage10-20261008-run3
+namespace/fix-stage10-20261008-run3 created
+deployment.apps/readiness-demo created
+service/readiness-demo created
+Waiting for deployment spec update to be observed...
+Waiting for deployment "readiness-demo" rollout to finish: 0 out of 2 new replicas have been updated...
+Waiting for deployment "readiness-demo" rollout to finish: 0 of 2 updated replicas are available...
+Waiting for deployment "readiness-demo" rollout to finish: 0 of 2 updated replicas are available...
+Waiting for deployment "readiness-demo" rollout to finish: 0 of 2 updated replicas are available...
+Waiting for deployment "readiness-demo" rollout to finish: 1 of 2 updated replicas are available...
+deployment "readiness-demo" successfully rolled out
+pod/readiness-check created
+pod/readiness-check condition met
+2026-10-08T10:18:24Z APPLY broken.yaml
+deployment.apps/readiness-demo configured
+service/readiness-demo unchanged
+pod/readiness-demo-57b7f45ff5-fpxdv condition met
+deployment.apps/readiness-demo paused
+NAME                              READY   STATUS    RESTARTS   AGE   IP            NODE       NOMINATED NODE   READINESS GATES
+readiness-demo-57b7f45ff5-fpxdv   1/1     Running   0          5s    10.244.0.65   minikube   <none>           <none>
+readiness-demo-5db7fc8c8c-zttsh   1/1     Running   0          61s   10.244.0.62   minikube   <none>           <none>
+deployment.apps/readiness-demo resumed
+deployment.apps/readiness-demo configured
+service/readiness-demo unchanged
+Waiting for deployment spec update to be observed...
+Waiting for deployment "readiness-demo" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "readiness-demo" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "readiness-demo" rollout to finish: 1 out of 2 new replicas have been updated...
+Waiting for deployment "readiness-demo" rollout to finish: 1 of 2 updated replicas are available...
+Waiting for deployment "readiness-demo" rollout to finish: 1 of 2 updated replicas are available...
+Waiting for deployment "readiness-demo" rollout to finish: 1 of 2 updated replicas are available...
+deployment "readiness-demo" successfully rolled out
+2026-10-08T10:19:16Z APPLY fixed-broken.yaml
+deployment.apps/readiness-demo configured
+service/readiness-demo unchanged
+Waiting for deployment "readiness-demo" rollout to finish: 1 out of 2 new replicas have been updated...
+error: timed out waiting for the condition
+NAME                              READY   STATUS    RESTARTS   AGE     IP            NODE       NOMINATED NODE   READINESS GATES
+readiness-demo-5db7fc8c8c-jxn2c   1/1     Running   0          93s     10.244.0.66   minikube   <none>           <none>
+readiness-demo-5db7fc8c8c-zttsh   1/1     Running   0          2m48s   10.244.0.62   minikube   <none>           <none>
+readiness-demo-7d6cfc7c-6gzqx     0/1     Running   0          61s     10.244.0.67   minikube   <none>           <none>
+Warning: resource deployments/readiness-demo was previously managed with 'kubectl apply'. Rolling back will not update the kubectl.kubernetes.io/last-applied-configuration annotation, which may cause unexpected behavior on future 'kubectl apply' operations. Consider using 'kubectl apply' with your previous configuration file instead.
+deployment.apps/readiness-demo rolled back
+Waiting for deployment spec update to be observed...
+Waiting for deployment "readiness-demo" rollout to finish: 1 old replicas are pending termination...
+deployment "readiness-demo" successfully rolled out
+{
+  "mixed": {
+    "requests": 100,
+    "codes": {
+      "503": 49,
+      "200": 51
+    },
+    "accepted": true
+  },
+  "fixed": {
+    "requests": 100,
+    "codes": {
+      "200": 100
+    },
+    "accepted": true
+  }
+}
+Exit=0 namespace=fix-stage10-20261008-run3 evidence=evidence/20261008-131728

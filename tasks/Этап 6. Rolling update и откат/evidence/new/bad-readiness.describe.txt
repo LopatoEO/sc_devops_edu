@@ -1,0 +1,238 @@
+Name:             api-5d47b9b4c-wwnkc
+Namespace:        fix-stage6-20261008-run1
+Priority:         0
+Service Account:  default
+Node:             minikube/192.168.49.2
+Start Time:       Thu, 08 Oct 2026 13:09:18 +0300
+Labels:           app=api
+                  pod-template-hash=5d47b9b4c
+Annotations:      <none>
+Status:           Running
+IP:               10.244.0.50
+IPs:
+  IP:           10.244.0.50
+Controlled By:  ReplicaSet/api-5d47b9b4c
+Containers:
+  api:
+    Container ID:   docker://f956470f1959a392d83867efcdc6b27e94e38c2e8b6bc195f68388b2ce4201e5
+    Image:          local/devops-api:fix-v2
+    Image ID:       docker://sha256:6ac2cb43c3f05c38e9cd7ddda4b06af12cc64ce4cc6bc2bce2c810d48bf45966
+    Port:           8000/TCP
+    Host Port:      0/TCP
+    State:          Running
+      Started:      Thu, 08 Oct 2026 13:09:19 +0300
+    Ready:          False
+    Restart Count:  0
+    Limits:
+      cpu:     500m
+      memory:  256Mi
+    Requests:
+      cpu:      100m
+      memory:   128Mi
+    Liveness:   http-get http://:8000/healthz delay=10s timeout=1s period=10s #success=1 #failure=3
+    Readiness:  http-get http://:8000/intentionally-missing-readyz delay=5s timeout=1s period=5s #success=1 #failure=3
+    Startup:    http-get http://:8000/healthz delay=0s timeout=1s period=5s #success=1 #failure=30
+    Environment Variables from:
+      api-config  ConfigMap  Optional: false
+      app-secret  Secret     Optional: false
+    Environment:  <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-f47pd (ro)
+Conditions:
+  Type                        Status
+  PodReadyToStartContainers   True
+  Initialized                 True
+  Ready                       False
+  ContainersReady             False
+  PodScheduled                True
+Volumes:
+  kube-api-access-f47pd:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    Optional:                false
+    DownwardAPI:             true
+QoS Class:                   Burstable
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+
+
+Name:             api-9f86cc48f-5sz56
+Namespace:        fix-stage6-20261008-run1
+Priority:         0
+Service Account:  default
+Node:             minikube/192.168.49.2
+Start Time:       Thu, 08 Oct 2026 13:07:40 +0300
+Labels:           app=api
+                  pod-template-hash=9f86cc48f
+Annotations:      <none>
+Status:           Running
+IP:               10.244.0.43
+IPs:
+  IP:           10.244.0.43
+Controlled By:  ReplicaSet/api-9f86cc48f
+Containers:
+  api:
+    Container ID:   docker://2f2e0c097598bd51bce7bdaef54bf3e6b2aae891d6891b94896da89dcf2fce42
+    Image:          local/devops-api:fix-v2
+    Image ID:       docker://sha256:6ac2cb43c3f05c38e9cd7ddda4b06af12cc64ce4cc6bc2bce2c810d48bf45966
+    Port:           8000/TCP
+    Host Port:      0/TCP
+    State:          Running
+      Started:      Thu, 08 Oct 2026 13:07:41 +0300
+    Ready:          True
+    Restart Count:  0
+    Limits:
+      cpu:     500m
+      memory:  256Mi
+    Requests:
+      cpu:      100m
+      memory:   128Mi
+    Liveness:   http-get http://:8000/healthz delay=10s timeout=1s period=10s #success=1 #failure=3
+    Readiness:  http-get http://:8000/readyz delay=5s timeout=1s period=5s #success=1 #failure=3
+    Startup:    http-get http://:8000/healthz delay=0s timeout=1s period=5s #success=1 #failure=30
+    Environment Variables from:
+      api-config  ConfigMap  Optional: false
+      app-secret  Secret     Optional: false
+    Environment:  <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-bhckb (ro)
+Conditions:
+  Type                        Status
+  PodReadyToStartContainers   True
+  Initialized                 True
+  Ready                       True
+  ContainersReady             True
+  PodScheduled                True
+Volumes:
+  kube-api-access-bhckb:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    Optional:                false
+    DownwardAPI:             true
+QoS Class:                   Burstable
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+
+
+Name:             api-9f86cc48f-c72w4
+Namespace:        fix-stage6-20261008-run1
+Priority:         0
+Service Account:  default
+Node:             minikube/192.168.49.2
+Start Time:       Thu, 08 Oct 2026 13:07:18 +0300
+Labels:           app=api
+                  pod-template-hash=9f86cc48f
+Annotations:      <none>
+Status:           Running
+IP:               10.244.0.42
+IPs:
+  IP:           10.244.0.42
+Controlled By:  ReplicaSet/api-9f86cc48f
+Containers:
+  api:
+    Container ID:   docker://2980feda52835dede991f8675e1b4590a2c2d17a0f8a65b47f98ad92c9b1cd90
+    Image:          local/devops-api:fix-v2
+    Image ID:       docker://sha256:6ac2cb43c3f05c38e9cd7ddda4b06af12cc64ce4cc6bc2bce2c810d48bf45966
+    Port:           8000/TCP
+    Host Port:      0/TCP
+    State:          Running
+      Started:      Thu, 08 Oct 2026 13:07:29 +0300
+    Ready:          True
+    Restart Count:  0
+    Limits:
+      cpu:     500m
+      memory:  256Mi
+    Requests:
+      cpu:      100m
+      memory:   128Mi
+    Liveness:   http-get http://:8000/healthz delay=10s timeout=1s period=10s #success=1 #failure=3
+    Readiness:  http-get http://:8000/readyz delay=5s timeout=1s period=5s #success=1 #failure=3
+    Startup:    http-get http://:8000/healthz delay=0s timeout=1s period=5s #success=1 #failure=30
+    Environment Variables from:
+      api-config  ConfigMap  Optional: false
+      app-secret  Secret     Optional: false
+    Environment:  <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-tbnk5 (ro)
+Conditions:
+  Type                        Status
+  PodReadyToStartContainers   True
+  Initialized                 True
+  Ready                       True
+  ContainersReady             True
+  PodScheduled                True
+Volumes:
+  kube-api-access-tbnk5:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    Optional:                false
+    DownwardAPI:             true
+QoS Class:                   Burstable
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+
+
+Name:             api-9f86cc48f-xr48g
+Namespace:        fix-stage6-20261008-run1
+Priority:         0
+Service Account:  default
+Node:             minikube/192.168.49.2
+Start Time:       Thu, 08 Oct 2026 13:07:48 +0300
+Labels:           app=api
+                  pod-template-hash=9f86cc48f
+Annotations:      <none>
+Status:           Running
+IP:               10.244.0.45
+IPs:
+  IP:           10.244.0.45
+Controlled By:  ReplicaSet/api-9f86cc48f
+Containers:
+  api:
+    Container ID:   docker://f87680eda4b0c568ccac5c1adb6a7343c0cffe9adc912845f3707157635ddf8b
+    Image:          local/devops-api:fix-v2
+    Image ID:       docker://sha256:6ac2cb43c3f05c38e9cd7ddda4b06af12cc64ce4cc6bc2bce2c810d48bf45966
+    Port:           8000/TCP
+    Host Port:      0/TCP
+    State:          Running
+      Started:      Thu, 08 Oct 2026 13:07:50 +0300
+    Ready:          True
+    Restart Count:  0
+    Limits:
+      cpu:     500m
+      memory:  256Mi
+    Requests:
+      cpu:      100m
+      memory:   128Mi
+    Liveness:   http-get http://:8000/healthz delay=10s timeout=1s period=10s #success=1 #failure=3
+    Readiness:  http-get http://:8000/readyz delay=5s timeout=1s period=5s #success=1 #failure=3
+    Startup:    http-get http://:8000/healthz delay=0s timeout=1s period=5s #success=1 #failure=30
+    Environment Variables from:
+      api-config  ConfigMap  Optional: false
+      app-secret  Secret     Optional: false
+    Environment:  <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-7s8m7 (ro)
+Conditions:
+  Type                        Status
+  PodReadyToStartContainers   True
+  Initialized                 True
+  Ready                       True
+  ContainersReady             True
+  PodScheduled                True
+Volumes:
+  kube-api-access-7s8m7:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    Optional:                false
+    DownwardAPI:             true
+QoS Class:                   Burstable
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s

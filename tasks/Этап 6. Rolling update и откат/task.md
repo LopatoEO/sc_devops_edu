@@ -10,54 +10,35 @@
 
 ## Выполнение
 
-Для данной задачи буду использовать битый образ который я использовал в этапе 4, для начала запустил все манифесты рабочие
+Опыт выполнен со стратегией `maxUnavailable: 0`, `maxSurge: 1`.
 
-Затем я сделаю новый манифест с битой версией и применю его
+Фоновый цикл curl из выполненного сценария:
 
-Запустил курл в отдельном поде
-
-```
-kubectl
---image=curlimages/curl
---rm -it
--- sh
-
+```bash
+kubectl -n default -run1 run curl-rollout \
+  --image=curlimages/curl:8.12.1 --restart=Never --command -- sh -c '
 while true; do
->   printf "%s " "$(date '+%H:%M:%S')"
->   curl -s --max-time 3 -o /dev/null -w "%{http_code}\n" http://api:8000/healthz
->   sleep 0.5
-> done
+  ts=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+  code=$(curl -sS --max-time 3 -o /dev/null -w "%{http_code}" http://api:8000/healthz)
+  rc=$?
+  printf "%s %s %s\n" "$ts" "$code" "$rc"
+  sleep 0.5
+done'
 ```
 
-Сначала выключил postgres, и получил ответы 000 на запрос, то есть проверил что из READY выпали поды, затем включил postgres сделал apply манифеста и все запросы все равно были 200
+| Фаза                                         | 200 | 000 |
+| ------------------------------------------------ | --: | --: |
+| Исходная версия                    |  27 |   0 |
+| Выкат fix-v1 → fix-v2                      |  81 |   0 |
+| Битый образ                            |  83 |   0 |
+| Откат образа                          |  30 |   0 |
+| Сломанная readiness                     |  85 |   0 |
+| Откат readiness                             |  27 |   0 |
+| Отключение Postgres                    |  37 |  30 |
+| После восстановления Postgres |  27 |   0 |
 
-Получил такую историю ролаута итоги curl поместил в файл evidence/curl.txt
+Во время rollout и откатов ошибок нет. Несуществующий образ дал `ErrImagePull`; в отдельной фазе новая реплика была Running, но readiness возвращала 404 и не пропускала её в трафик. Старые реплики оставались Ready. Оба `kubectl rollout undo` завершились успешно, `/version` подтвердил смену `fix-v1` на `fix-v2`.
 
-```
-kubectl rollout history deployment/api
-kubectl rollout undo deployment/api
-kubectl rollout status deployment/api
-deployment.apps/api 
-REVISION  CHANGE-CAUSE
-1         <none>
-2         <none>
+`000` с exit code curl 7 относится к отдельному отключению Postgres. После восстановления API снова готов: 3/3.
 
-Warning: resource deployments/api was previously managed with 'kubectl apply'. Rolling back will not update the kubectl.kubernetes.io/last-applied-configuration annotation, which may cause unexpected behavior on future 'kubectl apply' operations. Consider using 'kubectl apply' with your previous configuration file instead.
-deployment.apps/api rolled back
-Waiting for deployment "api" rollout to finish: 0 out of 3 new replicas have been updated...
-Waiting for deployment "api" rollout to finish: 1 out of 3 new replicas have been updated...
-Waiting for deployment "api" rollout to finish: 1 out of 3 new replicas have been updated...
-Waiting for deployment "api" rollout to finish: 1 out of 3 new replicas have been updated...
-Waiting for deployment "api" rollout to finish: 2 out of 3 new replicas have been updated...
-Waiting for deployment "api" rollout to finish: 2 out of 3 new replicas have been updated...
-Waiting for deployment "api" rollout to finish: 2 out of 3 new replicas have been updated...
-Waiting for deployment "api" rollout to finish: 2 out of 3 new replicas have been updated...
-Waiting for deployment "api" rollout to finish: 1 old replicas are pending termination...
-Waiting for deployment "api" rollout to finish: 1 old replicas are pending termination...
-Waiting for deployment "api" rollout to finish: 1 old replicas are pending termination...
-deployment "api" successfully rolled out
-```
-
-При обновлении Deployment использовалась стратегия RollingUpdate с maxUnavailable: 0 и maxSurge: 1. Во время выката фоновый под непрерывно отправлял запросы через Service api; все запросы возвращали HTTP 200.
-Намеренно сломанная версия приложения запускалась, но не проходила readinessProbe, поэтому на них не шел трафик. Старые Ready поды продолжали обслуживать трафик, и неуспешный rollout не вызвал недоступности API.
-После этого выполнил kubectl rollout undo deployment/api. Kubernetes постепенно вернул предыдущую рабочую версию, а kubectl rollout status deployment/api завершился сообщением successfully rolled out. История ревизий доступна через kubectl rollout history deployment/api.
+[Полный лог команд](evidence/new/run.log), [границы фаз](evidence/new/timeline.log), [подсчёт](evidence/new/summary.json), [история и итоговое состояние](evidence/new/recovery.resources.txt). Отдельные curl-логи находятся в том же каталоге.

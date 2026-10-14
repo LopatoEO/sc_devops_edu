@@ -38,12 +38,18 @@ https://github.com/LopatoEO/edu-devops-helm-ci-cd
 
 https://github.com/LopatoEO/edu-devops-helm-ci-cd/actions/runs/35522758796
 
-Проверил оба воркфлоу все задеплоилось
+Успешный запуск текущего `helm-workflow.yml`, коммит `c249058`:
+
+https://github.com/LopatoEO/edu-devops-helm-ci-cd/actions/runs/36564127128/job/109392033486
+
+GitLab CI для Helm добавлен в корневой `.gitlab-ci.yml`. Нужны shell runners с тегами `docker-builder` и `minikube`, Helm 4, File variable `KUBE_CONFIG`, `POSTGRES_PASSWORD` и deploy token `REGISTRY_PULL_USER`/`REGISTRY_PULL_PASSWORD` с `read_registry`. GitLab pipelines ещё не запускались.
+
+Оба GitHub workflow завершились успешным деплоем
 
 Комманда:
 
 ```shell
-kubectl apply 
+kubectl apply
 ```
 
 приводит отдельные Kubernetes-ресурсы к состоянию, описанному в YAML, но сам по себе не объединяет их в версионируемый релиз приложения.

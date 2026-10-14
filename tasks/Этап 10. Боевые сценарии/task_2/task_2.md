@@ -11,7 +11,7 @@ NAME             READY   STATUS   RESTARTS      AGE
 crashloop-test   0/1     Error    2 (29s ago)   40s
 ```
 
-Пойдем в describe сначала 
+Пойдем в describe сначала
 
 ```bash
 kubectl describe pod crashloop-test
@@ -41,7 +41,7 @@ Containers:
       echo "FATAL: DATABASE_URL is missing"
       sleep 2
       exit 1
-      
+
     State:          Terminated
       Reason:       Error
       Exit Code:    1
@@ -59,11 +59,11 @@ Containers:
       /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-pbc8v (ro)
 Conditions:
   Type                        Status
-  PodReadyToStartContainers   True 
-  Initialized                 True 
-  Ready                       False 
-  ContainersReady             False 
-  PodScheduled                True 
+  PodReadyToStartContainers   True
+  Initialized                 True
+  Ready                       False
+  ContainersReady             False
+  PodScheduled                True
 Volumes:
   kube-api-access-pbc8v:
     Type:                    Projected (a volume that contains injected data from multiple sources)

@@ -75,11 +75,11 @@ bin    etc    lib    mnt    proc   run    srv    tmp    var
 dev    home   media  opt    root   sbin   sys    usr
 / # pwd
 /
-/ # nano 
+/ # nano
 sh: nano: not found
 / # touch test
 / # ls
 bin    etc    lib    mnt    proc   run    srv    test   usr
 dev    home   media  opt    root   sbin   sys    tmp    var
-/ # 
+/ #
 ```

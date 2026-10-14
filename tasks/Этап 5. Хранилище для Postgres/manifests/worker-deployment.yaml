@@ -21,10 +21,10 @@ spec:
     spec:
       containers:
         - name: worker
-          image: elopato/devops-edu-worker:v1.0 
+          image: elopato/devops-edu-worker:v1.0
           imagePullPolicy: IfNotPresent
           envFrom:
           - configMapRef:
               name: api-config
           - secretRef:
-              name: app-secret          
+              name: app-secret

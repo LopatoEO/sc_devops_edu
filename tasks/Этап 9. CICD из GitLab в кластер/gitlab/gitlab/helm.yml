@@ -1,0 +1,21 @@
+deploy-helm:
+  extends: .deploy
+  script:
+    - |
+      set -eu
+      export KUBECONFIG="$KUBE_CONFIG"
+      # Local minikube profile; does not require ingress-nginx or cert-manager.
+      set -- -f "$CI_SCRIPTS/values-minikube.yaml" \
+        --set-string "api.image.repository=$CI_REGISTRY_IMAGE/api" \
+        --set-string "api.image.tag=$CI_COMMIT_SHA" \
+        --set-string "worker.image.repository=$CI_REGISTRY_IMAGE/worker" \
+        --set-string "worker.image.tag=$CI_COMMIT_SHA"
+      helm lint "$CHART_PATH" "$@"
+      helm template "$RELEASE_NAME" "$CHART_PATH" --namespace "$NAMESPACE" "$@" > /dev/null
+      helm upgrade --install "$RELEASE_NAME" "$CHART_PATH" \
+        --namespace "$NAMESPACE" "$@" --rollback-on-failure --wait --timeout 5m
+      mkdir -p evidence
+      helm history "$RELEASE_NAME" -n "$NAMESPACE" > evidence/helm-history.txt
+      kubectl -n "$NAMESPACE" exec deployment/"$RELEASE_NAME-api" -- \
+        python -c 'import urllib.request; r=urllib.request.urlopen("http://127.0.0.1:8000/readyz",timeout=5); print(r.status,r.read().decode())' \
+        > evidence/readyz.txt

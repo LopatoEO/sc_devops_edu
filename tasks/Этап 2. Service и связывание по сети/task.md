@@ -27,7 +27,7 @@ kubectl apply -f api-service.yaml
 Проверим что поднялись сервисы
 
 ```bash
-kubectl get services           
+kubectl get services
 NAME         TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
 api          ClusterIP   10.98.38.15     <none>        8000/TCP   1s
 kubernetes   ClusterIP   10.96.0.1       <none>        443/TCP    90m

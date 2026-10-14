@@ -125,6 +125,34 @@ jobs:
             deployment/ingress-nginx-controller \
             --timeout=180s
 
+      - name: Ensure namespace
+        shell: bash
+        run: |
+          kubectl create namespace "$NAMESPACE" --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Ensure PostgreSQL secret
+        shell: bash
+        env:
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+        run: |
+          existing_secret=$(kubectl get secret postgres-auth \
+            --namespace "$NAMESPACE" --ignore-not-found -o name)
+          if [[ -n "$existing_secret" ]]; then
+            password_present=$(kubectl get secret postgres-auth \
+              --namespace "$NAMESPACE" \
+              -o go-template='{{if index .data "POSTGRES_PASSWORD"}}yes{{end}}')
+            if [[ "$password_present" != yes ]]; then
+              echo "::error::postgres-auth must contain a non-empty POSTGRES_PASSWORD key"
+              exit 1
+            fi
+            echo "Using existing postgres-auth secret"
+          else
+            : "${POSTGRES_PASSWORD:?Create postgres-auth in the cluster or set POSTGRES_PASSWORD in GitHub Actions secrets}"
+            kubectl create secret generic postgres-auth \
+              --namespace "$NAMESPACE" \
+              --from-literal=POSTGRES_PASSWORD="$POSTGRES_PASSWORD"
+          fi
+
       - name: Create GHCR pull secret
         shell: bash
         env:
@@ -139,17 +167,6 @@ jobs:
             --dry-run=client \
             -o yaml \
             | kubectl apply -f -
-
-      - name: Create database credentials
-        shell: bash
-        env:
-          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-        run: |
-          : "${POSTGRES_PASSWORD:?Configure POSTGRES_PASSWORD in Actions secrets}"
-          kubectl create secret generic postgres-auth \
-            --namespace "$NAMESPACE" \
-            --from-literal=POSTGRES_PASSWORD="$POSTGRES_PASSWORD" \
-            --dry-run=client -o yaml | kubectl apply -f -
 
       - name: Prepare image values
         shell: bash
@@ -168,13 +185,12 @@ jobs:
       - name: Helm lint
         shell: bash
         run: |
-          helm lint "$CHART_PATH" -f "$CHART_PATH/values-production.yaml"
+          helm lint "$CHART_PATH"
 
       - name: Render Helm templates
         shell: bash
         run: |
           helm template "$RELEASE_NAME" "$CHART_PATH" \
-            -f "$CHART_PATH/values-production.yaml" \
             --namespace "$NAMESPACE" \
             --set-string api.image.repository="$API_REPOSITORY" \
             --set-string api.image.tag="$GITHUB_SHA" \
@@ -188,7 +204,6 @@ jobs:
         shell: bash
         run: |
           helm upgrade --install "$RELEASE_NAME" "$CHART_PATH" \
-            -f "$CHART_PATH/values-production.yaml" \
             --namespace "$NAMESPACE" \
             --create-namespace \
             --set-string api.image.repository="$API_REPOSITORY" \
@@ -200,6 +215,7 @@ jobs:
             --timeout 5m
 
       - name: Show Helm release
+        if: always()
         shell: bash
         run: |
           echo "=== Releases ==="
@@ -212,6 +228,7 @@ jobs:
             --namespace "$NAMESPACE"
 
       - name: Show Kubernetes resources
+        if: always()
         shell: bash
         run: |
           echo "=== Pods ==="
@@ -250,3 +267,10 @@ jobs:
           kubectl get deployment "${RELEASE_NAME}-worker" \
             --namespace "$NAMESPACE" \
             -o jsonpath='{.spec.template.spec.containers[0].image}{"\n"}'
+
+      - name: Show Kubernetes events on failure
+        if: failure()
+        shell: bash
+        run: |
+          kubectl get events --namespace "$NAMESPACE" \
+            --sort-by=.metadata.creationTimestamp

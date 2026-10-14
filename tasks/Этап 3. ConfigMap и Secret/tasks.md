@@ -52,8 +52,8 @@ kubectl get pods
 ```
 
 ```text
-NAME                   READY   STATUS    RESTARTS   AGE   
-api-765fb99c49-49h65   1/1     Running   0          49s   
+NAME                   READY   STATUS    RESTARTS   AGE
+api-765fb99c49-49h65   1/1     Running   0          49s
 api-765fb99c49-fxqqq   1/1     Running   0          49s   10.244.0.49   minikube   <none>           <none>
 api-765fb99c49-snpm7   1/1     Running   0          49s   10.244.0.52   minikube   <none>           <none>
 ```
@@ -81,7 +81,7 @@ kubectl -n default exec api-765fb99c49-49h65 -- printenv EVENTS_CACHE_TTL
 Изменим переменную через изменение конфигмапы
 
 ```bash
-kubectl -n default patch configmap app-config --type=merge -p '{"data":{"EVENTS_CACHE_TTL":"60"}}'
+kubectl -n default patch configmap api-config --type=merge -p '{"data":{"EVENTS_CACHE_TTL":"60"}}'
 configmap/api-config patched
 ```
 

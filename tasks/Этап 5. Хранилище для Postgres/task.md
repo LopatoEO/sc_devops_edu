@@ -53,10 +53,10 @@ worker-54d9665476-bsd8k   1/1     Running   0          16m
 worker-54d9665476-gnz6v   1/1     Running   0          16m
 worker-54d9665476-gqbdw   1/1     Running   0          16m
 
-kubectl delete pod postgres-0 
+kubectl delete pod postgres-0
 pod "postgres-0" deleted from default namespace
 
-kubectl get pods             
+kubectl get pods
 NAME                      READY   STATUS    RESTARTS   AGE
 api-6f9c79bbf4-l9dk6      1/1     Running   0          17m
 api-6f9c79bbf4-qpjj9      1/1     Running   0          17m

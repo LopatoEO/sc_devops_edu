@@ -1,187 +1,25 @@
 После выката половина запросов отдаёт 503. Объясни, как это связано с readinessProbe и `maxUnavailable`.
 
-Проверим что это действительно так
+Опыт повторён 08.10.2026 в `fix-stage10-20261008-run3`:
 
 ```bash
-kubectl -n default exec readiness-check -- sh -c 'for i in $(seq 1 60); do curl -sS --max-time 3 -o /dev/null -w "%{http_code}\n" http://readiness-demo:8000/; sleep 0.1; done'
-
-200
-200
-503
-200
-503
-200
-503
-200
-503
-503
-200
-200
-200
-200
-503
-503
-503
-200
-200
-503
-503
-200
-503
-200
-200
-200
-503
-503
-200
-503
-200
-503
-200
-200
-200
-200
-503
-503
-200
-503
-503
-503
-503
-503
-503
-503
-503
-200
-503
-503
-503
-200
-200
-503
-503
-503
-503
-503
-503
-503
+bash run.sh
 ```
 
+Проблемная версия явно задана в `manifests/broken.yml`: `APP_STATUS=503`, `READINESS_MODE=always`. Команда её выката:
 
-
-Для проверки сценария использовал Deployment с двумя репликами и стратегией RollingUpdate:
-
-Также была настроена readynessProbe, которая проверяла соответсвующий endpoint.
-
-Проблема заключалась в том, что эндпоинт продолжал возвращать 200, даже когда новая версия приложения уже не могла корректно обслуживать пользовательские запросы и возвращала 503.
-
-Из-за этого Kubernetes считал новую реплику готовой и проксировал на него запросы.
-
-Получалась ситуация:
-
-Service балансировал запросы между обеими репликами, поэтому часть запросов попадала на неисправную новую версию и возвращала 503.
-
-Провери состояние Pod можно через:
-
-```
-kubectl get pods
+```bash
+kubectl -n fix-stage10-20261008-run3 apply -f manifests/broken.yml
 ```
 
-Проверить endpoints Service:
+Сценарий приостанавливает rollout при одной старой и одной новой Ready-реплике. Перед измерением проверяются два Ready endpoints. Новая реплика возвращает `/` → 503, `/readyz` → 200, поэтому Service направляет в неё трафик.
 
-```
-kubectl get endpointslice \
-  -l kubernetes.io/service-name=<service-name> \
-  -o wide
-kubectl get endpointslice \
-  -l kubernetes.io/service-name=readiness-demo \
-  -o wide
-NAME                   ADDRESSTYPE   PORTS   ENDPOINTS                 AGE
-readiness-demo-xc8vp   IPv4          8000    10.244.0.48,10.244.0.47   7m10s
-```
+| Проверка | 200 | 503 | 000 |
+|---|---:|---:|---:|
+| Смешанный состав | 51 | 49 | 0 |
+| После исправления readiness | 100 | 0 | 0 |
 
-Проверим deployment
+`maxUnavailable: 1` разрешает уменьшить число доступных реплик на одну, но не исправляет ложную readiness. В `manifests/fixed-broken.yml` readiness возвращает 503 при `APP_STATUS=503`; `maxUnavailable: 0`, `maxSurge: 1` сохраняют рабочие старые реплики. Новая остаётся NotReady, rollout останавливается. После проверки выполнен успешный откат.
 
-```
-kubectl describe deployment readiness-demo
-Name:                   readiness-demo
-Namespace:              default
-CreationTimestamp:      Sun, 20 Sep 2026 21:24:49 +0300
-Labels:                 <none>
-Annotations:            deployment.kubernetes.io/revision: 1
-Selector:               app=readiness-demo
-Replicas:               2 desired | 2 updated | 2 total | 2 available | 0 unavailable
-StrategyType:           RollingUpdate
-MinReadySeconds:        0
-RollingUpdateStrategy:  1 max unavailable, 0 max surge
-Pod Template:
-  Labels:  app=readiness-demo
-  Containers:
-   app:
-    Image:      python:3.12-alpine
-    Port:       8000/TCP
-    Host Port:  0/TCP
-    Command:
-      python
-      -c
-      import os
-      from http.server import BaseHTTPRequestHandler, HTTPServer
-    
-      status = int(os.environ.get("APP_STATUS", "200"))
-    
-      class Handler(BaseHTTPRequestHandler):
-          def do_GET(self):
-              if self.path == "/readyz":
-                  self.send_response(200)
-                  self.end_headers()
-                  self.wfile.write(b"READY")
-                  return
-    
-              self.send_response(status)
-              self.end_headers()
-              self.wfile.write(
-                  f"APP STATUS: {status}\n".encode()
-              )
-    
-          def log_message(self, format, *args):
-              pass
-    
-      HTTPServer(("0.0.0.0", 8000), Handler).serve_forever()
-    
-    Readiness:  http-get http://:8000/readyz delay=1s timeout=1s period=2s #success=1 #failure=3
-    Environment:
-      APP_STATUS:  200
-    Mounts:        <none>
-  Volumes:         <none>
-  Node-Selectors:  <none>
-  Tolerations:     <none>
-Conditions:
-  Type           Status  Reason
-  ----           ------  ------
-  Available      True    MinimumReplicasAvailable
-  Progressing    True    NewReplicaSetAvailable
-OldReplicaSets:  <none>
-NewReplicaSet:   readiness-demo-677bc5c686 (2/2 replicas created)
-Events:
-  Type    Reason             Age    From                   Message
-  ----    ------             ----   ----                   -------
-  Normal  ScalingReplicaSet  8m19s  deployment-controller  Scaled up replica set readiness-demo-677bc5c686 from 0 to 2
-```
-
-maxUnavailable: 1 означает, что во время rollout Kubernetes разрешено иметь на одну доступную реплику меньше заданного числа.
-
-При двух репликах Kubernetes может временно оставить только одну старую рабочую реплику. После того как новая реплика проходит readiness, Deployment считает её полноценной заменой и может продолжить удаление старых Pod.
-
-Для более безопасного rollout можно использовать:
-
-```
-strategy:
-  type: RollingUpdate
-  rollingUpdate:
-    maxUnavailable: 0
-    maxSurge: 1
-```
-
-В таком случае Kubernetes сначала создаёт дополнительную новую реплику и ждёт, пока она станет Ready, и только после этого удаляет старую.
-
-Однако основное исправление — сделать readinessProbe действительно отражающей способность приложения обслуживать пользовательский трафик.
+[Полный лог](evidence/new/run.log), [curl mixed](evidence/new/mixed.curl.log), [curl fixed](evidence/new/fixed.curl.log)
+[Describe mixed](evidence/new/mixed.describe.txt) соответствует `broken.yml` (`minReadySeconds: 120`); [describe fixed](evidence/new/fixed.describe.txt) — `fixed-broken.yml` (`30`).

@@ -1,0 +1,118 @@
+2026-10-08T10:05:57Z context=minikube namespace=fix-stage6-20261008-run1 GOOD_IMAGE=local/devops-api:fix-v1 NEW_IMAGE=local/devops-api:fix-v2 BAD_IMAGE=docker.io/library/alpine:devops-intentionally-missing-20261008
+namespace/fix-stage6-20261008-run1 created
+service/api created
+secret/app-secret created
+configmap/api-config created
+deployment.apps/api created
+secret/pg-secret created
+configmap/postgres-init created
+service/postgres created
+statefulset.apps/postgres created
+deployment.apps/redis created
+service/redis created
+deployment.apps/worker created
+Waiting for 1 pods to be ready...
+partitioned roll out complete: 1 new pods have been updated...
+Waiting for deployment "api" rollout to finish: 0 of 3 updated replicas are available...
+Waiting for deployment "api" rollout to finish: 1 of 3 updated replicas are available...
+Waiting for deployment "api" rollout to finish: 2 of 3 updated replicas are available...
+deployment "api" successfully rolled out
+2026-10-08T10:06:37Z START baseline
+pod/curl-baseline created
+pod/curl-baseline condition met
+2026-10-08T10:07:01Z END baseline
+pod "curl-baseline" deleted from fix-stage6-20261008-run1 namespace
+2026-10-08T10:07:01Z START rollout
+pod/curl-rollout created
+pod/curl-rollout condition met
+2026-10-08T10:07:11Z SET_IMAGE api=local/devops-api:fix-v2
+deployment.apps/api image updated
+Waiting for deployment spec update to be observed...
+Waiting for deployment spec update to be observed...
+Waiting for deployment "api" rollout to finish: 0 out of 3 new replicas have been updated...
+Waiting for deployment "api" rollout to finish: 1 out of 3 new replicas have been updated...
+Waiting for deployment "api" rollout to finish: 1 out of 3 new replicas have been updated...
+Waiting for deployment "api" rollout to finish: 1 out of 3 new replicas have been updated...
+Waiting for deployment "api" rollout to finish: 1 out of 3 new replicas have been updated...
+Waiting for deployment "api" rollout to finish: 1 out of 3 new replicas have been updated...
+Waiting for deployment "api" rollout to finish: 2 out of 3 new replicas have been updated...
+Waiting for deployment "api" rollout to finish: 2 out of 3 new replicas have been updated...
+Waiting for deployment "api" rollout to finish: 2 out of 3 new replicas have been updated...
+Waiting for deployment "api" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "api" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "api" rollout to finish: 1 old replicas are pending termination...
+deployment "api" successfully rolled out
+2026-10-08T10:08:10Z END rollout
+pod "curl-rollout" deleted from fix-stage6-20261008-run1 namespace
+2026-10-08T10:08:10Z START bad-image
+pod/curl-bad-image created
+pod/curl-bad-image condition met
+2026-10-08T10:08:14Z SET_IMAGE api=docker.io/library/alpine:devops-intentionally-missing-20261008
+deployment.apps/api image updated
+Waiting for deployment "api" rollout to finish: 1 out of 3 new replicas have been updated...
+error: timed out waiting for the condition
+2026-10-08T10:08:55Z END bad-image
+pod "curl-bad-image" deleted from fix-stage6-20261008-run1 namespace
+2026-10-08T10:08:55Z START undo
+pod/curl-undo created
+pod/curl-undo condition met
+2026-10-08T10:09:01Z ROLLOUT_UNDO bad-image
+Warning: resource deployments/api was previously managed with 'kubectl apply'. Rolling back will not update the kubectl.kubernetes.io/last-applied-configuration annotation, which may cause unexpected behavior on future 'kubectl apply' operations. Consider using 'kubectl apply' with your previous configuration file instead.
+deployment.apps/api rolled back
+Waiting for deployment spec update to be observed...
+Waiting for deployment spec update to be observed...
+Waiting for deployment "api" rollout to finish: 1 old replicas are pending termination...
+deployment "api" successfully rolled out
+2026-10-08T10:09:13Z END undo
+pod "curl-undo" deleted from fix-stage6-20261008-run1 namespace
+2026-10-08T10:09:13Z START bad-readiness
+pod/curl-bad-readiness created
+pod/curl-bad-readiness condition met
+2026-10-08T10:09:18Z PATCH readinessProbe=/intentionally-missing-readyz
+deployment.apps/api patched
+Waiting for deployment "api" rollout to finish: 0 out of 3 new replicas have been updated...
+Waiting for deployment "api" rollout to finish: 1 out of 3 new replicas have been updated...
+error: timed out waiting for the condition
+2026-10-08T10:09:59Z END bad-readiness
+pod "curl-bad-readiness" deleted from fix-stage6-20261008-run1 namespace
+2026-10-08T10:09:59Z START readiness-undo
+pod/curl-readiness-undo created
+pod/curl-readiness-undo condition met
+2026-10-08T10:10:03Z ROLLOUT_UNDO bad-readiness
+Warning: resource deployments/api was previously managed with 'kubectl apply'. Rolling back will not update the kubectl.kubernetes.io/last-applied-configuration annotation, which may cause unexpected behavior on future 'kubectl apply' operations. Consider using 'kubectl apply' with your previous configuration file instead.
+deployment.apps/api rolled back
+Waiting for deployment spec update to be observed...
+Waiting for deployment "api" rollout to finish: 1 old replicas are pending termination...
+deployment "api" successfully rolled out
+2026-10-08T10:10:13Z END readiness-undo
+pod "curl-readiness-undo" deleted from fix-stage6-20261008-run1 namespace
+2026-10-08T10:10:13Z START postgres-off
+pod/curl-postgres-off created
+pod/curl-postgres-off condition met
+2026-10-08T10:10:17Z SCALE postgres=0
+statefulset.apps/postgres scaled
+pod/postgres-0 condition met
+2026-10-08T10:10:59Z END postgres-off
+pod "curl-postgres-off" deleted from fix-stage6-20261008-run1 namespace
+2026-10-08T10:10:59Z RECOVER postgres=1
+statefulset.apps/postgres scaled
+Waiting for 1 pods to be ready...
+partitioned roll out complete: 1 new pods have been updated...
+Waiting for deployment "api" rollout to finish: 0 of 3 updated replicas are available...
+Waiting for deployment "api" rollout to finish: 1 of 3 updated replicas are available...
+Waiting for deployment "api" rollout to finish: 2 of 3 updated replicas are available...
+deployment "api" successfully rolled out
+2026-10-08T10:11:05Z START recovery
+pod/curl-recovery created
+pod/curl-recovery condition met
+2026-10-08T10:11:20Z END recovery
+pod "curl-recovery" deleted from fix-stage6-20261008-run1 namespace
+baseline: {'requests': 27, 'http': {'200': 27}, 'curl_exit': {0: 27}, 'errors': 0, 'accepted': True}
+rollout: {'requests': 81, 'http': {'200': 81}, 'curl_exit': {0: 81}, 'errors': 0, 'accepted': True}
+bad-image: {'requests': 83, 'http': {'200': 83}, 'curl_exit': {0: 83}, 'errors': 0, 'accepted': True}
+undo: {'requests': 30, 'http': {'200': 30}, 'curl_exit': {0: 30}, 'errors': 0, 'accepted': True}
+bad-readiness: {'requests': 85, 'http': {'200': 85}, 'curl_exit': {0: 85}, 'errors': 0, 'accepted': True}
+readiness-undo: {'requests': 27, 'http': {'200': 27}, 'curl_exit': {0: 27}, 'errors': 0, 'accepted': True}
+postgres-off: {'requests': 67, 'http': {'200': 37, '000': 30}, 'curl_exit': {0: 37, 7: 30}, 'errors': 30, 'accepted': True}
+recovery: {'requests': 27, 'http': {'200': 27}, 'curl_exit': {0: 27}, 'errors': 0, 'accepted': True}
+Exit=0 namespace=fix-stage6-20261008-run1 evidence=evidence/20261008-130557

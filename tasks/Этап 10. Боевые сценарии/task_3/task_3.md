@@ -37,12 +37,12 @@ No resources found in default namespace.
 kubectl exec -it api-debug -- sh
 # python -c 'import socket; print(socket.gethostbyname("postgres"))'
 10.107.177.169
-# python - <<'PY' 
+# python - <<'PY'
 import socket
 s = socket.create_connection(("postgres", 5432), timeout=3)
 print("CONNECTED")
 s.close()
-PY> > > > > > 
+PY> > > > > >
 CONNECTED
 ```
 
@@ -62,7 +62,7 @@ import socket
 s = socket.create_connection(("postgres", 5432), timeout=3)
 print("CONNECTED")
 s.close()
-PY> > > > > > 
+PY> > > > > >
 Traceback (most recent call last):
   File "<stdin>", line 3, in <module>
   File "/usr/local/lib/python3.12/socket.py", line 865, in create_connection
@@ -72,7 +72,7 @@ Traceback (most recent call last):
 ConnectionRefusedError: [Errno 111] Connection refused
 ```
 
-Как бы мы искали причину если бы не знали её 
+Как бы мы искали причину если бы не знали её
 
 ```bash
 kubectl describe svc postgres
@@ -88,7 +88,7 @@ IP:                       10.107.177.169
 IPs:                      10.107.177.169
 Port:                     <unset>  5432/TCP
 TargetPort:               5432/TCP
-Endpoints:                
+Endpoints:
 Session Affinity:         None
 Internal Traffic Policy:  Cluster
 Events:                   <none>
