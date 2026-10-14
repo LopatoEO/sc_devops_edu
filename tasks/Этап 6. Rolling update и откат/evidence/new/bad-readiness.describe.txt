@@ -1,5 +1,5 @@
 Name:             api-5d47b9b4c-wwnkc
-Namespace:        fix-stage6-20261008-run1
+Namespace:        default
 Priority:         0
 Service Account:  default
 Node:             minikube/192.168.49.2
@@ -59,7 +59,7 @@ Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists fo
 
 
 Name:             api-9f86cc48f-5sz56
-Namespace:        fix-stage6-20261008-run1
+Namespace:        default
 Priority:         0
 Service Account:  default
 Node:             minikube/192.168.49.2
@@ -119,7 +119,7 @@ Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists fo
 
 
 Name:             api-9f86cc48f-c72w4
-Namespace:        fix-stage6-20261008-run1
+Namespace:        default
 Priority:         0
 Service Account:  default
 Node:             minikube/192.168.49.2
@@ -179,7 +179,7 @@ Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists fo
 
 
 Name:             api-9f86cc48f-xr48g
-Namespace:        fix-stage6-20261008-run1
+Namespace:        default
 Priority:         0
 Service Account:  default
 Node:             minikube/192.168.49.2

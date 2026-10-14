@@ -1,5 +1,4 @@
-context=minikube namespace=fix-stage10-20261008-run3
-namespace/fix-stage10-20261008-run3 created
+context=minikube namespace=default
 deployment.apps/readiness-demo created
 service/readiness-demo created
 Waiting for deployment spec update to be observed...
@@ -61,4 +60,4 @@ deployment "readiness-demo" successfully rolled out
     "accepted": true
   }
 }
-Exit=0 namespace=fix-stage10-20261008-run3 evidence=evidence/20261008-131728
+Exit=0 namespace=default evidence=evidence/20261008-131728

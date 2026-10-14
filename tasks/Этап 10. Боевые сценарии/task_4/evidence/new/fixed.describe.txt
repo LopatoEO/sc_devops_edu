@@ -1,5 +1,5 @@
 Name:                   readiness-demo
-Namespace:              fix-stage10-20261008-run3
+Namespace:              default
 CreationTimestamp:      Thu, 08 Oct 2026 13:17:29 +0300
 Labels:                 <none>
 Annotations:            deployment.kubernetes.io/revision: 4

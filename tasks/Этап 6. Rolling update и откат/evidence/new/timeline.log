@@ -1,4 +1,4 @@
-2026-10-08T10:05:57Z context=minikube namespace=fix-stage6-20261008-run1 GOOD_IMAGE=local/devops-api:fix-v1 NEW_IMAGE=local/devops-api:fix-v2 BAD_IMAGE=docker.io/library/alpine:devops-intentionally-missing-20261008
+2026-10-08T10:05:57Z context=minikube namespace=default GOOD_IMAGE=local/devops-api:fix-v1 NEW_IMAGE=local/devops-api:fix-v2 BAD_IMAGE=docker.io/library/alpine:devops-intentionally-missing-20261008
 2026-10-08T10:06:37Z START baseline
 2026-10-08T10:07:01Z END baseline
 2026-10-08T10:07:01Z START rollout

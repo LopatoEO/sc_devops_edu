@@ -15,7 +15,7 @@
 Фоновый цикл curl из выполненного сценария:
 
 ```bash
-kubectl -n default -run1 run curl-rollout \
+kubectl -n default run curl-rollout \
   --image=curlimages/curl:8.12.1 --restart=Never --command -- sh -c '
 while true; do
   ts=$(date -u +%Y-%m-%dT%H:%M:%SZ)
@@ -41,4 +41,4 @@ done'
 
 `000` с exit code curl 7 относится к отдельному отключению Postgres. После восстановления API снова готов: 3/3.
 
-[Полный лог команд](evidence/new/run.log), [границы фаз](evidence/new/timeline.log), [подсчёт](evidence/new/summary.json), [история и итоговое состояние](evidence/new/recovery.resources.txt). Отдельные curl-логи находятся в том же каталоге.
+[Полный лог команд](evidence/new/run.log), [границы фаз](evidence/new/timeline.log) и  [история](evidence/new/recovery.resources.txt). Отдельные curl-логи находятся в том же каталоге.
