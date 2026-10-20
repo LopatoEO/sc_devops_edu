@@ -108,3 +108,27 @@ kubectl -n default exec api-765fb99c49-49h65 -- printenv EVENTS_CACHE_TTL
 Значение в env осталось прежним, потому что переменные окружения формируются при запуске контейнера. Чтобы получить новое значение из ConfigMap через envFrom, Pod нужно пересоздать.
 
 Файл в volume обновился без пересоздания Pod. Если бы приложение умело перечитывать этот файл, его конфигурацию можно было бы менять на лету.
+
+
+
+Проверил DNS из пода, selector Service и labels подов:
+
+```bash
+kubectl -n default exec api-debug -- python -c 'import socket; print(socket.gethostbyname("postgres.default.svc.cluster.local"))'
+kubectl -n default get service postgres -o wide
+kubectl -n default get pods --show-labels
+kubectl -n default get endpointslices -l kubernetes.io/service-name=postgres -o wide
+kubectl -n default get networkpolicy
+```
+
+DNS вернул `10.111.183.244` — ClusterIP Service `postgres`. У Service selector `app=broken-postgres`, а у пода `postgres-7b4959fd89-tvldm` label `app=postgres`. Поэтому Service не выбрал под: EndpointSlice пуст, TCP-соединение из `api-debug` завершилось `ConnectionRefusedError`. NetworkPolicy в `default` отсутствуют.
+
+Вернул правильный selector:
+
+```bash
+kubectl -n default patch service postgres --type=merge -p '{"spec":{"selector":{"app":"postgres"}}}'
+```
+
+В EndpointSlice появился адрес `10.244.0.216:5432`, повторное соединение из `api-debug` вернуло `CONNECTED`. Причина — несовпадение selector Service и labels пода.
+
+[Полный вывод команд, включая проверку TCP до и после исправления](scenario-3.txt).

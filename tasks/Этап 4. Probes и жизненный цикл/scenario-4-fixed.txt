@@ -1,0 +1,27 @@
+$ kubectl -n default get pod readiness-demo-7d6cfc7c-47p7f -o wide
+NAME                            READY   STATUS    RESTARTS   AGE   IP             NODE       NOMINATED NODE   READINESS GATES
+readiness-demo-7d6cfc7c-47p7f   0/1     Running   0          2s    10.244.0.222   minikube   <none>           <none>
+
+$ kubectl -n default exec readiness-demo-7d6cfc7c-47p7f -- python -c 'import urllib.request, urllib.error
+for path in ["/", "/readyz"]:
+ try:
+  r=urllib.request.urlopen("http://127.0.0.1:8000"+path); print(path,r.status)
+ except urllib.error.HTTPError as e: print(path,e.code)'
+/ 503
+/readyz 503
+
+$ kubectl -n default logs readiness-demo-7d6cfc7c-47p7f --timestamps
+2026-10-16T07:10:02.717795136Z request path=/ status=503
+
+$ kubectl -n default get events --field-selector involvedObject.name=readiness-demo-7d6cfc7c-47p7f --sort-by=.metadata.creationTimestamp
+LAST SEEN   TYPE      REASON      OBJECT                              MESSAGE
+3s          Normal    Scheduled   pod/readiness-demo-7d6cfc7c-47p7f   Successfully assigned default/readiness-demo-7d6cfc7c-47p7f to minikube
+3s          Normal    Pulled      pod/readiness-demo-7d6cfc7c-47p7f   Container image "python:3.12-alpine" already present on machine and can be accessed by the pod
+3s          Normal    Created     pod/readiness-demo-7d6cfc7c-47p7f   Container created
+2s          Normal    Started     pod/readiness-demo-7d6cfc7c-47p7f   Container started
+2s          Warning   Unhealthy   pod/readiness-demo-7d6cfc7c-47p7f   Readiness probe failed: Get "http://10.244.0.222:8000/readyz": dial tcp 10.244.0.222:8000: connect: connection refused
+1s          Warning   Unhealthy   pod/readiness-demo-7d6cfc7c-47p7f   Readiness probe failed: HTTP probe failed with statuscode: 503
+
+$ kubectl -n default get pod readiness-demo-7d6cfc7c-47p7f -o 'jsonpath={.status.conditions}{"\n"}'
+[{"lastProbeTime":null,"lastTransitionTime":"2026-10-16T07:10:00Z","observedGeneration":1,"status":"True","type":"PodReadyToStartContainers"},{"lastProbeTime":null,"lastTransitionTime":"2026-10-16T07:09:59Z","observedGeneration":1,"status":"True","type":"Initialized"},{"lastProbeTime":null,"lastTransitionTime":"2026-10-16T07:09:59Z","message":"containers with unready status: [app]","observedGeneration":1,"reason":"ContainersNotReady","status":"False","type":"Ready"},{"lastProbeTime":null,"lastTransitionTime":"2026-10-16T07:09:59Z","message":"containers with unready status: [app]","observedGeneration":1,"reason":"ContainersNotReady","status":"False","type":"ContainersReady"},{"lastProbeTime":null,"lastTransitionTime":"2026-10-16T07:09:59Z","observedGeneration":1,"status":"True","type":"PodScheduled"}]
+

@@ -8,7 +8,6 @@
 - сломай `/healthz` — под перезапускается, это видно в `kubectl describe`
 - поставь заведомо маленький лимит памяти, поймай `OOMKilled` и покажи его в статусе и событиях пода
 
-
 ## Выполнение
 
 У меня уже реализованы эти эндпоинты так что я начал с того что прописал в манифест пробы и ресурсы
@@ -63,7 +62,6 @@ api-6f9c79bbf4-m7rnl        1/1     Running   0          60s
 postgres-84c77cb487-gc62k   1/1     Running   0          10m
 redis-c46d5dffc-jmbc4       1/1     Running   0          10m
 ```
-
 
 Далее решил положить readyz пробу положил сервис постгреса
 
@@ -152,3 +150,29 @@ redis-c46d5dffc-jmbc4       1/1     Running   0             41m
 ```
 
 Теперь под рестартиться по liveness probe оставил describe в файле lp_crash_report.txt
+
+
+## kubectl logs и разбор events
+
+Собрал логи и события новой проблемной реплики:
+
+```bash
+kubectl -n default logs readiness-demo-57b7f45ff5-22r47 --timestamps
+kubectl -n default get events --field-selector involvedObject.name=readiness-demo-57b7f45ff5-22r47 --sort-by=.metadata.creationTimestamp
+```
+
+В логах есть `request path=/ status=503`. Прямые запросы к приложению показали `/` → `503`, `/readyz` → `200`; состояние пода — `Ready=True`. Значит, readiness проверяет endpoint, который сообщает о готовности даже при ошибках приложения. Service может направлять трафик на эту реплику. `maxUnavailable: 1` допускает уменьшение числа доступных реплик на одну, но не проверяет корректность ответов приложения.
+
+В events видны `Scheduled`, `Pulled`, `Created`, `Started` и предупреждение `Unhealthy` из-за таймаута readiness. В логах также есть `BrokenPipeError` при записи в закрытое соединение; причина закрытия по этим данным не установлена. На момент сохранения состояния под снова Ready. Вывод о ложной readiness основан на сочетании `/` → `503`, `/readyz` → `200` и `Ready=True`.
+
+После исправления readiness собрал данные новой реплики:
+
+```bash
+kubectl -n default logs readiness-demo-7d6cfc7c-47p7f --timestamps
+kubectl -n default get events --field-selector involvedObject.name=readiness-demo-7d6cfc7c-47p7f --sort-by=.metadata.creationTimestamp
+```
+
+В логах приложение по-прежнему возвращает `503`. Теперь `/readyz` также отвечает `503`, в events после стартового `connection refused` появляется `Unhealthy: HTTP probe failed with statuscode: 503`, а под остаётся `Ready=False`. Readiness обнаруживает проблемную версию. Настройки `maxUnavailable: 0`, `maxSurge: 1` сохраняют старые рабочие реплики во время такого выката.
+
+[Команды, логи и события проблемной версии](scenario-4-broken.txt).
+[Команды, логи и события после исправления readiness](scenario-4-fixed.txt).

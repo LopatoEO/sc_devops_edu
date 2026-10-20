@@ -1,0 +1,50 @@
+$ kubectl -n default patch service postgres --type=merge -p '{"spec":{"selector":{"app":"broken-postgres"}}}'
+service/postgres patched
+
+$ kubectl -n default exec api-debug -- python -c 'import socket; print("postgres.default.svc.cluster.local =", socket.gethostbyname("postgres.default.svc.cluster.local"))'
+postgres.default.svc.cluster.local = 10.111.183.244
+
+$ kubectl -n default get service postgres -o wide
+NAME       TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE    SELECTOR
+postgres   ClusterIP   10.111.183.244   <none>        5432/TCP   119s   app=broken-postgres
+
+$ kubectl -n default get service postgres -o 'jsonpath={.spec.selector}{"\n"}'
+{"app":"broken-postgres"}
+
+$ kubectl -n default get pods --show-labels
+NAME                                READY   STATUS    RESTARTS       AGE    LABELS
+api-debug                           1/1     Running   0              119s   app=api
+devops-app-api-56dc4c89cb-c2nhz     1/1     Running   3 (3m2s ago)   43h    app.kubernetes.io/component=api,app.kubernetes.io/instance=devops-app,app.kubernetes.io/name=devops-app,pod-template-hash=56dc4c89cb
+devops-app-api-56dc4c89cb-k2bpg     1/1     Running   2 (3m2s ago)   43h    app.kubernetes.io/component=api,app.kubernetes.io/instance=devops-app,app.kubernetes.io/name=devops-app,pod-template-hash=56dc4c89cb
+devops-app-postgresql-0             1/1     Running   1 (3m2s ago)   43h    app.kubernetes.io/component=postgresql,app.kubernetes.io/instance=devops-app,app.kubernetes.io/name=devops-app,apps.kubernetes.io/pod-index=0,controller-revision-hash=devops-app-postgresql-6c75476b5c,statefulset.kubernetes.io/pod-name=devops-app-postgresql-0
+devops-app-redis-0                  1/1     Running   2 (3m2s ago)   43h    app.kubernetes.io/component=redis,app.kubernetes.io/instance=devops-app,app.kubernetes.io/name=devops-app,apps.kubernetes.io/pod-index=0,controller-revision-hash=devops-app-redis-59884c79fd,statefulset.kubernetes.io/pod-name=devops-app-redis-0
+devops-app-worker-bf85b44f5-zr9sc   1/1     Running   1 (3m2s ago)   43h    app.kubernetes.io/component=worker,app.kubernetes.io/instance=devops-app,app.kubernetes.io/name=devops-app,pod-template-hash=bf85b44f5
+postgres-7b4959fd89-tvldm           1/1     Running   0              119s   app=postgres,pod-template-hash=7b4959fd89
+
+$ kubectl -n default get endpointslices -l kubernetes.io/service-name=postgres -o wide
+NAME             ADDRESSTYPE   PORTS     ENDPOINTS   AGE
+postgres-dqdqt   IPv4          <unset>   <unset>     2m
+
+$ kubectl -n default get networkpolicy
+No resources found in default namespace.
+
+$ kubectl -n default exec api-debug -- python -c 'import socket; s=socket.create_connection(("postgres",5432),timeout=3); print("CONNECTED"); s.close()'
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/usr/local/lib/python3.12/socket.py", line 865, in create_connection
+    raise exceptions[0]
+  File "/usr/local/lib/python3.12/socket.py", line 850, in create_connection
+    sock.connect(sa)
+ConnectionRefusedError: [Errno 111] Connection refused
+command terminated with exit code 1
+
+$ kubectl -n default patch service postgres --type=merge -p '{"spec":{"selector":{"app":"postgres"}}}'
+service/postgres patched
+
+$ kubectl -n default get endpointslices -l kubernetes.io/service-name=postgres -o wide
+NAME             ADDRESSTYPE   PORTS   ENDPOINTS      AGE
+postgres-dqdqt   IPv4          5432    10.244.0.216   2m16s
+
+$ kubectl -n default exec api-debug -- python -c 'import socket; s=socket.create_connection(("postgres",5432),timeout=3); print("CONNECTED"); s.close()'
+CONNECTED
+

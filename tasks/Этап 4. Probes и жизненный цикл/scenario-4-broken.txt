@@ -1,0 +1,278 @@
+$ kubectl -n default get pod readiness-demo-57b7f45ff5-22r47 -o wide
+NAME                              READY   STATUS    RESTARTS   AGE   IP             NODE       NOMINATED NODE   READINESS GATES
+readiness-demo-57b7f45ff5-22r47   1/1     Running   0          5s    10.244.0.220   minikube   <none>           <none>
+
+$ kubectl -n default exec readiness-demo-57b7f45ff5-22r47 -- python -c 'import urllib.request, urllib.error
+for path in ["/", "/readyz"]:
+ try:
+  r=urllib.request.urlopen("http://127.0.0.1:8000"+path); print(path,r.status)
+ except urllib.error.HTTPError as e: print(path,e.code)'
+/ 503
+/readyz 200
+
+$ kubectl -n default logs readiness-demo-57b7f45ff5-22r47 --timestamps
+2026-10-16T07:05:58.912254259Z ----------------------------------------
+2026-10-16T07:05:59.010528176Z Exception occurred during processing of request from ('10.244.0.1', 37450)
+2026-10-16T07:06:05.510744845Z ----------------------------------------
+2026-10-16T07:06:05.521283262Z Exception occurred during processing of request from ('10.244.0.1', 37456)
+2026-10-16T07:06:06.123992762Z ----------------------------------------
+2026-10-16T07:06:06.124071762Z Exception occurred during processing of request from ('10.244.0.1', 46398)
+2026-10-16T07:06:13.417209377Z ----------------------------------------
+2026-10-16T07:06:13.417650752Z Exception occurred during processing of request from ('10.244.0.1', 46422)
+2026-10-16T07:06:14.311103960Z ----------------------------------------
+2026-10-16T07:06:14.311810210Z Exception occurred during processing of request from ('10.244.0.1', 45952)
+2026-10-16T07:06:14.311827710Z Traceback (most recent call last):
+2026-10-16T07:06:14.311830044Z Traceback (most recent call last):
+2026-10-16T07:06:29.204380217Z Traceback (most recent call last):
+2026-10-16T07:06:30.011230301Z Traceback (most recent call last):
+2026-10-16T07:06:30.816749926Z Traceback (most recent call last):
+2026-10-16T07:06:32.125081677Z ----------------------------------------
+2026-10-16T07:06:32.125277552Z Exception occurred during processing of request from ('10.244.0.1', 45966)
+2026-10-16T07:06:32.125292094Z Traceback (most recent call last):
+2026-10-16T07:06:32.823873594Z ----------------------------------------
+2026-10-16T07:06:33.003856928Z Exception occurred during processing of request from ('10.244.0.1', 45976)
+2026-10-16T07:06:33.019764053Z   File "/usr/local/lib/python3.12/socketserver.py", line 697, in process_request_thread
+2026-10-16T07:06:33.019790928Z     self.finish_request(request, client_address)
+2026-10-16T07:06:33.111533386Z   File "/usr/local/lib/python3.12/socketserver.py", line 362, in finish_request
+2026-10-16T07:06:33.111701511Z     self.RequestHandlerClass(request, client_address, self)
+2026-10-16T07:06:33.111722178Z   File "/usr/local/lib/python3.12/socketserver.py", line 766, in __init__
+2026-10-16T07:06:33.111748386Z     self.handle()
+2026-10-16T07:06:33.111988761Z   File "/usr/local/lib/python3.12/http/server.py", line 440, in handle
+2026-10-16T07:06:33.112365511Z     self.handle_one_request()
+2026-10-16T07:06:33.112380761Z   File "/usr/local/lib/python3.12/http/server.py", line 428, in handle_one_request
+2026-10-16T07:06:33.112385303Z     method()
+2026-10-16T07:06:33.112389594Z   File "<string>", line 13, in do_GET
+2026-10-16T07:06:33.112398844Z   File "/usr/local/lib/python3.12/socketserver.py", line 845, in write
+2026-10-16T07:06:33.112404803Z     self._sock.sendall(b)
+2026-10-16T07:06:33.112408636Z BrokenPipeError: [Errno 32] Broken pipe
+2026-10-16T07:06:33.299453469Z   File "/usr/local/lib/python3.12/socketserver.py", line 697, in process_request_thread
+2026-10-16T07:06:33.299539678Z     self.finish_request(request, client_address)
+2026-10-16T07:06:33.301723011Z   File "/usr/local/lib/python3.12/socketserver.py", line 362, in finish_request
+2026-10-16T07:06:33.301739719Z     self.RequestHandlerClass(request, client_address, self)
+2026-10-16T07:06:33.301747511Z   File "/usr/local/lib/python3.12/socketserver.py", line 766, in __init__
+2026-10-16T07:06:33.301749469Z     self.handle()
+2026-10-16T07:06:33.301750219Z   File "/usr/local/lib/python3.12/http/server.py", line 440, in handle
+2026-10-16T07:06:33.301751011Z     self.handle_one_request()
+2026-10-16T07:06:33.301753928Z   File "/usr/local/lib/python3.12/http/server.py", line 428, in handle_one_request
+2026-10-16T07:06:33.301755511Z     method()
+2026-10-16T07:06:33.301756511Z   File "<string>", line 13, in do_GET
+2026-10-16T07:06:33.301757803Z   File "/usr/local/lib/python3.12/socketserver.py", line 845, in write
+2026-10-16T07:06:33.301759136Z     self._sock.sendall(b)
+2026-10-16T07:06:33.301759928Z BrokenPipeError: [Errno 32] Broken pipe
+2026-10-16T07:06:33.413158136Z ----------------------------------------
+2026-10-16T07:06:33.414682678Z   File "/usr/local/lib/python3.12/socketserver.py", line 697, in process_request_thread
+2026-10-16T07:06:33.414713678Z     self.finish_request(request, client_address)
+2026-10-16T07:06:33.414720886Z   File "/usr/local/lib/python3.12/socketserver.py", line 362, in finish_request
+2026-10-16T07:06:33.414727511Z     self.RequestHandlerClass(request, client_address, self)
+2026-10-16T07:06:33.414734386Z   File "/usr/local/lib/python3.12/socketserver.py", line 766, in __init__
+2026-10-16T07:06:33.414739678Z     self.handle()
+2026-10-16T07:06:33.414741053Z   File "/usr/local/lib/python3.12/http/server.py", line 440, in handle
+2026-10-16T07:06:33.414742511Z     self.handle_one_request()
+2026-10-16T07:06:33.420823053Z   File "/usr/local/lib/python3.12/http/server.py", line 428, in handle_one_request
+2026-10-16T07:06:33.420858969Z     method()
+2026-10-16T07:06:33.420882678Z   File "<string>", line 13, in do_GET
+2026-10-16T07:06:33.420887261Z   File "/usr/local/lib/python3.12/socketserver.py", line 845, in write
+2026-10-16T07:06:33.420888886Z     self._sock.sendall(b)
+2026-10-16T07:06:33.420892011Z BrokenPipeError: [Errno 32] Broken pipe
+2026-10-16T07:06:33.420893011Z ----------------------------------------
+2026-10-16T07:06:33.912269470Z   File "/usr/local/lib/python3.12/socketserver.py", line 697, in process_request_thread
+2026-10-16T07:06:33.912318178Z     self.finish_request(request, client_address)
+2026-10-16T07:06:33.912321886Z   File "/usr/local/lib/python3.12/socketserver.py", line 362, in finish_request
+2026-10-16T07:06:33.912359803Z     self.RequestHandlerClass(request, client_address, self)
+2026-10-16T07:06:33.912361886Z   File "/usr/local/lib/python3.12/socketserver.py", line 766, in __init__
+2026-10-16T07:06:33.912363386Z     self.handle()
+2026-10-16T07:06:33.912364386Z   File "/usr/local/lib/python3.12/http/server.py", line 440, in handle
+2026-10-16T07:06:33.912367261Z     self.handle_one_request()
+2026-10-16T07:06:33.912370845Z   File "/usr/local/lib/python3.12/http/server.py", line 428, in handle_one_request
+2026-10-16T07:06:33.912371845Z     method()
+2026-10-16T07:06:33.912372595Z   File "<string>", line 13, in do_GET
+2026-10-16T07:06:33.912373595Z   File "/usr/local/lib/python3.12/socketserver.py", line 845, in write
+2026-10-16T07:06:33.912374761Z     self._sock.sendall(b)
+2026-10-16T07:06:33.912375636Z BrokenPipeError: [Errno 32] Broken pipe
+2026-10-16T07:06:33.912377053Z ----------------------------------------
+2026-10-16T07:06:33.912391970Z Traceback (most recent call last):
+2026-10-16T07:06:34.215609970Z ----------------------------------------
+2026-10-16T07:06:34.219780345Z   File "/usr/local/lib/python3.12/socketserver.py", line 697, in process_request_thread
+2026-10-16T07:06:34.219827553Z     self.finish_request(request, client_address)
+2026-10-16T07:06:34.416595845Z   File "/usr/local/lib/python3.12/socketserver.py", line 697, in process_request_thread
+2026-10-16T07:06:34.416724553Z     self.finish_request(request, client_address)
+2026-10-16T07:06:34.416756762Z   File "/usr/local/lib/python3.12/socketserver.py", line 362, in finish_request
+2026-10-16T07:06:34.416776970Z     self.RequestHandlerClass(request, client_address, self)
+2026-10-16T07:06:34.416783887Z   File "/usr/local/lib/python3.12/socketserver.py", line 697, in process_request_thread
+2026-10-16T07:06:34.416789678Z     self.finish_request(request, client_address)
+2026-10-16T07:06:34.416796178Z ----------------------------------------
+2026-10-16T07:06:34.416801845Z Exception occurred during processing of request from ('10.244.0.1', 59794)
+2026-10-16T07:06:35.410356387Z ----------------------------------------
+2026-10-16T07:06:37.620689596Z Exception occurred during processing of request from ('10.244.0.1', 45986)
+2026-10-16T07:06:37.623022763Z   File "/usr/local/lib/python3.12/socketserver.py", line 766, in __init__
+2026-10-16T07:06:37.623031263Z     self.handle()
+2026-10-16T07:06:37.623032888Z   File "/usr/local/lib/python3.12/http/server.py", line 440, in handle
+2026-10-16T07:06:37.623034430Z     self.handle_one_request()
+2026-10-16T07:06:37.623035680Z   File "/usr/local/lib/python3.12/http/server.py", line 428, in handle_one_request
+2026-10-16T07:06:37.623036763Z     method()
+2026-10-16T07:06:37.623037513Z   File "<string>", line 13, in do_GET
+2026-10-16T07:06:37.625457346Z   File "/usr/local/lib/python3.12/socketserver.py", line 845, in write
+2026-10-16T07:06:37.625468971Z     self._sock.sendall(b)
+2026-10-16T07:06:37.625470846Z BrokenPipeError: [Errno 32] Broken pipe
+2026-10-16T07:06:37.625471721Z Traceback (most recent call last):
+2026-10-16T07:06:37.625472555Z   File "/usr/local/lib/python3.12/socketserver.py", line 362, in finish_request
+2026-10-16T07:06:37.625473430Z     self.RequestHandlerClass(request, client_address, self)
+2026-10-16T07:06:37.625474263Z   File "/usr/local/lib/python3.12/socketserver.py", line 362, in finish_request
+2026-10-16T07:06:37.625475055Z     self.RequestHandlerClass(request, client_address, self)
+2026-10-16T07:06:37.625476263Z   File "/usr/local/lib/python3.12/socketserver.py", line 766, in __init__
+2026-10-16T07:06:37.625477096Z     self.handle()
+2026-10-16T07:06:37.625477805Z   File "/usr/local/lib/python3.12/http/server.py", line 440, in handle
+2026-10-16T07:06:37.625478596Z     self.handle_one_request()
+2026-10-16T07:06:37.625479346Z   File "/usr/local/lib/python3.12/http/server.py", line 428, in handle_one_request
+2026-10-16T07:06:37.625480138Z     method()
+2026-10-16T07:06:37.625480846Z   File "<string>", line 13, in do_GET
+2026-10-16T07:06:37.625481846Z Traceback (most recent call last):
+2026-10-16T07:06:37.625482638Z ----------------------------------------
+2026-10-16T07:06:37.810858471Z   File "/usr/local/lib/python3.12/socketserver.py", line 766, in __init__
+2026-10-16T07:06:37.810899596Z     self.handle()
+2026-10-16T07:06:37.810904346Z   File "/usr/local/lib/python3.12/http/server.py", line 440, in handle
+2026-10-16T07:06:37.810908305Z     self.handle_one_request()
+2026-10-16T07:06:37.810912930Z   File "/usr/local/lib/python3.12/http/server.py", line 428, in handle_one_request
+2026-10-16T07:06:37.810915721Z     method()
+2026-10-16T07:06:37.810916555Z ----------------------------------------
+2026-10-16T07:06:37.810917388Z Exception occurred during processing of request from ('10.244.0.1', 59800)
+2026-10-16T07:06:37.810918221Z   File "/usr/local/lib/python3.12/socketserver.py", line 845, in write
+2026-10-16T07:06:37.810919138Z     self._sock.sendall(b)
+2026-10-16T07:06:37.810919971Z BrokenPipeError: [Errno 32] Broken pipe
+2026-10-16T07:06:37.810924055Z   File "/usr/local/lib/python3.12/socketserver.py", line 697, in process_request_thread
+2026-10-16T07:06:37.810926221Z     self.finish_request(request, client_address)
+2026-10-16T07:06:37.810928013Z   File "/usr/local/lib/python3.12/socketserver.py", line 362, in finish_request
+2026-10-16T07:06:37.810932471Z     self.RequestHandlerClass(request, client_address, self)
+2026-10-16T07:06:37.810936055Z   File "/usr/local/lib/python3.12/socketserver.py", line 766, in __init__
+2026-10-16T07:06:37.810950138Z     self.handle()
+2026-10-16T07:06:37.810954096Z   File "/usr/local/lib/python3.12/http/server.py", line 440, in handle
+2026-10-16T07:06:37.810955846Z     self.handle_one_request()
+2026-10-16T07:06:37.811184305Z   File "/usr/local/lib/python3.12/http/server.py", line 428, in handle_one_request
+2026-10-16T07:06:37.811190846Z     method()
+2026-10-16T07:06:37.811192888Z   File "<string>", line 13, in do_GET
+2026-10-16T07:06:37.811194138Z   File "/usr/local/lib/python3.12/socketserver.py", line 845, in write
+2026-10-16T07:06:37.811195096Z     self._sock.sendall(b)
+2026-10-16T07:06:37.811196763Z BrokenPipeError: [Errno 32] Broken pipe
+2026-10-16T07:06:37.811197888Z ----------------------------------------
+2026-10-16T07:06:37.811198805Z   File "<string>", line 13, in do_GET
+2026-10-16T07:06:37.811200013Z   File "/usr/local/lib/python3.12/socketserver.py", line 845, in write
+2026-10-16T07:06:37.811200971Z     self._sock.sendall(b)
+2026-10-16T07:06:37.811201721Z BrokenPipeError: [Errno 32] Broken pipe
+2026-10-16T07:06:37.811202513Z ----------------------------------------
+2026-10-16T07:06:37.811203930Z   File "/usr/local/lib/python3.12/socketserver.py", line 697, in process_request_thread
+2026-10-16T07:06:37.811207180Z     self.finish_request(request, client_address)
+2026-10-16T07:06:37.811208055Z   File "/usr/local/lib/python3.12/socketserver.py", line 362, in finish_request
+2026-10-16T07:06:37.811209513Z     self.RequestHandlerClass(request, client_address, self)
+2026-10-16T07:06:37.811210346Z   File "/usr/local/lib/python3.12/socketserver.py", line 766, in __init__
+2026-10-16T07:06:37.811212180Z     self.handle()
+2026-10-16T07:06:37.811214930Z   File "/usr/local/lib/python3.12/http/server.py", line 440, in handle
+2026-10-16T07:06:37.811218346Z     self.handle_one_request()
+2026-10-16T07:06:37.811221388Z   File "/usr/local/lib/python3.12/http/server.py", line 428, in handle_one_request
+2026-10-16T07:06:37.811222763Z     method()
+2026-10-16T07:06:37.811223638Z   File "<string>", line 13, in do_GET
+2026-10-16T07:06:37.811224930Z   File "/usr/local/lib/python3.12/socketserver.py", line 845, in write
+2026-10-16T07:06:37.811228888Z     self._sock.sendall(b)
+2026-10-16T07:06:37.811229805Z BrokenPipeError: [Errno 32] Broken pipe
+2026-10-16T07:06:37.811230596Z ----------------------------------------
+2026-10-16T07:06:37.811231513Z ----------------------------------------
+2026-10-16T07:06:37.811233138Z Traceback (most recent call last):
+2026-10-16T07:06:37.811234096Z   File "/usr/local/lib/python3.12/socketserver.py", line 697, in process_request_thread
+2026-10-16T07:06:37.811234930Z     self.finish_request(request, client_address)
+2026-10-16T07:06:37.811241263Z   File "/usr/local/lib/python3.12/socketserver.py", line 362, in finish_request
+2026-10-16T07:06:37.811242221Z     self.RequestHandlerClass(request, client_address, self)
+2026-10-16T07:06:37.811243013Z   File "/usr/local/lib/python3.12/socketserver.py", line 766, in __init__
+2026-10-16T07:06:37.811243971Z     self.handle()
+2026-10-16T07:06:37.811247596Z   File "/usr/local/lib/python3.12/http/server.py", line 440, in handle
+2026-10-16T07:06:37.811248680Z     self.handle_one_request()
+2026-10-16T07:06:37.811249471Z   File "/usr/local/lib/python3.12/http/server.py", line 428, in handle_one_request
+2026-10-16T07:06:37.811252846Z     method()
+2026-10-16T07:06:37.811254263Z   File "<string>", line 13, in do_GET
+2026-10-16T07:06:37.811255096Z   File "/usr/local/lib/python3.12/socketserver.py", line 845, in write
+2026-10-16T07:06:37.811255930Z     self._sock.sendall(b)
+2026-10-16T07:06:37.811256680Z BrokenPipeError: [Errno 32] Broken pipe
+2026-10-16T07:06:37.811257971Z ----------------------------------------
+2026-10-16T07:06:37.818159430Z ----------------------------------------
+2026-10-16T07:06:37.818230388Z Exception occurred during processing of request from ('10.244.0.1', 46226)
+2026-10-16T07:06:37.920753013Z Traceback (most recent call last):
+2026-10-16T07:06:38.527751013Z   File "/usr/local/lib/python3.12/socketserver.py", line 697, in process_request_thread
+2026-10-16T07:06:38.528082472Z     self.finish_request(request, client_address)
+2026-10-16T07:06:38.528115513Z   File "/usr/local/lib/python3.12/socketserver.py", line 362, in finish_request
+2026-10-16T07:06:38.528130847Z     self.RequestHandlerClass(request, client_address, self)
+2026-10-16T07:06:38.528133472Z   File "/usr/local/lib/python3.12/socketserver.py", line 766, in __init__
+2026-10-16T07:06:38.528135222Z     self.handle()
+2026-10-16T07:06:38.528140055Z   File "/usr/local/lib/python3.12/http/server.py", line 440, in handle
+2026-10-16T07:06:38.528144597Z     self.handle_one_request()
+2026-10-16T07:06:38.528149972Z   File "/usr/local/lib/python3.12/http/server.py", line 428, in handle_one_request
+2026-10-16T07:06:38.528154472Z     method()
+2026-10-16T07:06:38.528156138Z   File "<string>", line 13, in do_GET
+2026-10-16T07:06:38.528157388Z   File "/usr/local/lib/python3.12/socketserver.py", line 845, in write
+2026-10-16T07:06:38.528158388Z     self._sock.sendall(b)
+2026-10-16T07:06:38.528159347Z BrokenPipeError: [Errno 32] Broken pipe
+2026-10-16T07:06:38.528160305Z ----------------------------------------
+2026-10-16T07:06:38.528161263Z ----------------------------------------
+2026-10-16T07:06:38.528162597Z Exception occurred during processing of request from ('10.244.0.1', 46230)
+2026-10-16T07:06:38.805500889Z ----------------------------------------
+2026-10-16T07:06:38.805567972Z Exception occurred during processing of request from ('10.244.0.1', 46236)
+2026-10-16T07:06:38.805644097Z ----------------------------------------
+2026-10-16T07:06:38.805650805Z Exception occurred during processing of request from ('10.244.0.1', 46238)
+2026-10-16T07:06:38.805656014Z Traceback (most recent call last):
+2026-10-16T07:06:38.816801722Z Traceback (most recent call last):
+2026-10-16T07:06:38.923021472Z Traceback (most recent call last):
+2026-10-16T07:06:38.923152180Z   File "/usr/local/lib/python3.12/socketserver.py", line 697, in process_request_thread
+2026-10-16T07:06:38.923170764Z     self.finish_request(request, client_address)
+2026-10-16T07:06:38.923175389Z   File "/usr/local/lib/python3.12/socketserver.py", line 362, in finish_request
+2026-10-16T07:06:38.923180305Z     self.RequestHandlerClass(request, client_address, self)
+2026-10-16T07:06:38.923183430Z   File "/usr/local/lib/python3.12/socketserver.py", line 766, in __init__
+2026-10-16T07:06:38.923184430Z     self.handle()
+2026-10-16T07:06:38.923185347Z   File "/usr/local/lib/python3.12/http/server.py", line 440, in handle
+2026-10-16T07:06:38.923186347Z     self.handle_one_request()
+2026-10-16T07:06:38.923187264Z   File "/usr/local/lib/python3.12/http/server.py", line 428, in handle_one_request
+2026-10-16T07:06:38.923188264Z     method()
+2026-10-16T07:06:38.923189139Z   File "<string>", line 13, in do_GET
+2026-10-16T07:06:38.923190347Z   File "/usr/local/lib/python3.12/socketserver.py", line 845, in write
+2026-10-16T07:06:38.923191347Z     self._sock.sendall(b)
+2026-10-16T07:06:38.923192180Z BrokenPipeError: [Errno 32] Broken pipe
+2026-10-16T07:06:38.923193055Z ----------------------------------------
+2026-10-16T07:06:38.923193972Z   File "/usr/local/lib/python3.12/socketserver.py", line 697, in process_request_thread
+2026-10-16T07:06:38.923195430Z     self.finish_request(request, client_address)
+2026-10-16T07:06:38.923196305Z   File "/usr/local/lib/python3.12/socketserver.py", line 697, in process_request_thread
+2026-10-16T07:06:38.923197305Z     self.finish_request(request, client_address)
+2026-10-16T07:06:38.923198180Z   File "/usr/local/lib/python3.12/socketserver.py", line 362, in finish_request
+2026-10-16T07:06:38.923199264Z     self.RequestHandlerClass(request, client_address, self)
+2026-10-16T07:06:38.923200139Z   File "/usr/local/lib/python3.12/socketserver.py", line 766, in __init__
+2026-10-16T07:06:38.923201139Z     self.handle()
+2026-10-16T07:06:38.923203972Z   File "/usr/local/lib/python3.12/http/server.py", line 440, in handle
+2026-10-16T07:06:38.923282930Z     self.handle_one_request()
+2026-10-16T07:06:38.923327680Z   File "/usr/local/lib/python3.12/http/server.py", line 428, in handle_one_request
+2026-10-16T07:06:38.923388514Z     method()
+2026-10-16T07:06:38.923394014Z   File "<string>", line 13, in do_GET
+2026-10-16T07:06:38.923397930Z   File "/usr/local/lib/python3.12/socketserver.py", line 845, in write
+2026-10-16T07:06:38.923400555Z     self._sock.sendall(b)
+2026-10-16T07:06:38.923402972Z BrokenPipeError: [Errno 32] Broken pipe
+2026-10-16T07:06:38.923403847Z ----------------------------------------
+2026-10-16T07:06:38.923407055Z   File "/usr/local/lib/python3.12/socketserver.py", line 362, in finish_request
+2026-10-16T07:06:38.923411389Z     self.RequestHandlerClass(request, client_address, self)
+2026-10-16T07:06:38.923415597Z   File "/usr/local/lib/python3.12/socketserver.py", line 766, in __init__
+2026-10-16T07:06:38.923416639Z     self.handle()
+2026-10-16T07:06:38.923417472Z   File "/usr/local/lib/python3.12/http/server.py", line 440, in handle
+2026-10-16T07:06:38.923423722Z     self.handle_one_request()
+2026-10-16T07:06:38.923426764Z   File "/usr/local/lib/python3.12/http/server.py", line 428, in handle_one_request
+2026-10-16T07:06:38.923427722Z     method()
+2026-10-16T07:06:38.923428514Z   File "<string>", line 13, in do_GET
+2026-10-16T07:06:38.923429430Z   File "/usr/local/lib/python3.12/socketserver.py", line 845, in write
+2026-10-16T07:06:38.926545514Z     self._sock.sendall(b)
+2026-10-16T07:06:38.926555764Z BrokenPipeError: [Errno 32] Broken pipe
+2026-10-16T07:06:38.926560097Z ----------------------------------------
+2026-10-16T07:07:04.624509387Z request path=/ status=503
+
+$ kubectl -n default get events --field-selector involvedObject.name=readiness-demo-57b7f45ff5-22r47 --sort-by=.metadata.creationTimestamp
+LAST SEEN   TYPE      REASON      OBJECT                                MESSAGE
+2m33s       Normal    Scheduled   pod/readiness-demo-57b7f45ff5-22r47   Successfully assigned default/readiness-demo-57b7f45ff5-22r47 to minikube
+2m32s       Normal    Pulled      pod/readiness-demo-57b7f45ff5-22r47   Container image "python:3.12-alpine" already present on machine and can be accessed by the pod
+2m32s       Normal    Created     pod/readiness-demo-57b7f45ff5-22r47   Container created
+2m31s       Normal    Started     pod/readiness-demo-57b7f45ff5-22r47   Container started
+108s        Warning   Unhealthy   pod/readiness-demo-57b7f45ff5-22r47   Readiness probe failed: Get "http://10.244.0.220:8000/readyz": context deadline exceeded (Client.Timeout exceeded while awaiting headers)
+
+$ kubectl -n default get pod readiness-demo-57b7f45ff5-22r47 -o 'jsonpath={.status.conditions}{"\n"}'
+[{"lastProbeTime":null,"lastTransitionTime":"2026-10-16T07:05:53Z","observedGeneration":1,"status":"True","type":"PodReadyToStartContainers"},{"lastProbeTime":null,"lastTransitionTime":"2026-10-16T07:05:50Z","observedGeneration":1,"status":"True","type":"Initialized"},{"lastProbeTime":null,"lastTransitionTime":"2026-10-16T07:06:42Z","observedGeneration":1,"status":"True","type":"Ready"},{"lastProbeTime":null,"lastTransitionTime":"2026-10-16T07:06:42Z","observedGeneration":1,"status":"True","type":"ContainersReady"},{"lastProbeTime":null,"lastTransitionTime":"2026-10-16T07:05:50Z","observedGeneration":1,"status":"True","type":"PodScheduled"}]
+
